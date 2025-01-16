@@ -42,10 +42,10 @@ const signup = async (req, res) => {
       email,
       password: hashedPassword,
       confirmpassword: hashedPassword, // Store hashed password
+      pic: imageUrl || null, // Store profile picture URL if available
       isVerified: false, // Account is unverified initially
       otp: await bcrypt.hash(otp, 10), // Store hashed OTP
       otpExpires: Date.now() + 2 * 60 * 1000, // OTP expires in 2 minutes
-      profilePic: imageUrl || null, // Store profile picture URL if available
     });
 
     // Save the user to the database
