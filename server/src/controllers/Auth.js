@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt"); // For password hashing
 const jwt = require("jsonwebtoken"); // For creating JWT tokens
 const crypto = require("crypto"); // For generating random OTPs
 const nodemailer = require("nodemailer"); // For sending emails
+const cloudinary = require("../utils/cloudinary"); // Cloudinary config
+const fs = require("fs"); // File system module for cleanup
 const User = require("../models/userModel"); // Mongoose model for User
 
 // Registration endpoint
@@ -11,88 +13,80 @@ const signup = async (req, res) => {
   const pic = req.file; // Access the uploaded file
   const secret = process.env.JWT_KEY; // JWT secret key from environment variables
 
-  if (pic) {
-    console.log(pic); // Log file info
-  } else {
-    console.log("No file uploaded");
-  }
-
   try {
-    // Check if a user with the provided email already exists
-    const findUser = await User.findOne({ email });
-    if (findUser) {
-      return res.status(409).json({
-        message: "USER ALREADY EXISTS",
+    let imageUrl;
+    if (pic) {
+      // Upload file to Cloudinary
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "uploads",
       });
-    } else {
-      // Hash the user's password for secure storage
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      // Generate a 6-digit OTP for email verification
-      const otp = crypto.randomInt(100000, 999999).toString();
-
-      // Create a new user instance
-      const user = new User({
-        fullname,
-        email,
-        password: hashedPassword,
-        confirmpassword: hashedPassword, // Store hashed password
-        isVerified: false, // By default verification status is false until OTP is verified
-        otp, // Store OTP for verification
-        otpExpires: Date.now() + 2 * 60 * 1000, // OTP expires in 2 minutes
-      });
-
-      // Save the user to the database first before sending OTP
-      await user.save();
-
-      // Generate a JWT token for the user
-      const token = await jwt.sign({ user: email, userId: user._id }, secret, {
-        expiresIn: "1h", // Token expires in 1 hour
-      });
-
-      // Configure the email transporter for sending the OTP
-      const transporter = nodemailer.createTransport({
-        service: "gmail", // Use Gmail service
-        auth: {
-          user: process.env.EMAIL_USER, // Email address from environment variables
-          pass: process.env.EMAIL_PASS, // Email password or app password
-        },
-      });
-
-      // Email options for sending the OTP
-      const mailOptions = {
-        from: process.env.EMAIL_USER, // Sender's email address
-        to: email, // Recipient's email address
-        subject: "VERIFY YOUR PrimeChat ACCOUNT", // Email subject
-        text: `Hello ${fullname},\n\nYour OTP for verification is: ${otp}`, // Email body
-      };
-
-      // Attempt to send the OTP via email
-      try {
-        const info = await transporter.sendMail(mailOptions);
-        console.log("OTP SENT TO", email, info.messageId); // Log success with messageId
-      } catch (error) {
-        console.error("ERROR SENDING OTP:", error); // Log failure
-        return res.status(500).json({
-          message: "ERROR SENDING OTP",
-          error: error.message,
-        });
-      }
-
-      // Send success response to the client
-      res.status(201).json({
-        message:
-          "REGISTRATION SUCCESSFUL! CHECK YOUR EMAIL FOR OTP TO VERIFY ACCOUNT",
-        user,
-        token,
-      });
+      imageUrl = result.secure_url; // Get the secure URL
+      fs.unlinkSync(req.file.path); // Clean up the file from local storage
     }
-  } catch (err) {
-    // Handle unexpected errors during registration
-    res.status(500).json({
-      message: "ERROR DURING REGISTRATION",
-      error: err.message,
+
+    // Check if a user with the provided email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ message: "USER ALREADY EXISTS" });
+    }
+
+    // Hash the user's password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Generate a 6-digit OTP for email verification
+    const otp = crypto.randomInt(100000, 999999).toString();
+
+    // Create a new user instance
+    const user = new User({
+      fullname,
+      email,
+      password: hashedPassword,
+      confirmpassword: hashedPassword, // Store hashed password
+      isVerified: false, // Account is unverified initially
+      otp: await bcrypt.hash(otp, 10), // Store hashed OTP
+      otpExpires: Date.now() + 2 * 60 * 1000, // OTP expires in 2 minutes
+      profilePic: imageUrl || null, // Store profile picture URL if available
     });
+
+    // Save the user to the database
+    await user.save();
+
+    // Generate a JWT token for the user
+    const token = jwt.sign({ user: email, userId: user._id }, secret, {
+      expiresIn: "1h",
+    });
+
+    // Configure the email transporter
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    // Email options
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "VERIFY YOUR PrimeChat ACCOUNT",
+      text: `Hello ${fullname},\n\nYour OTP for verification is: ${otp}. This OTP is valid for 2 minutes.`,
+    };
+
+    // Send OTP email
+    await transporter.sendMail(mailOptions);
+
+    // Respond with success
+    res.status(201).json({
+      message:
+        "REGISTRATION SUCCESSFUL! CHECK YOUR EMAIL FOR OTP TO VERIFY ACCOUNT",
+      user,
+      token,
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "ERROR DURING REGISTRATION", error: err.message });
   }
 };
 
@@ -101,83 +95,72 @@ const verifyOtp = async (req, res) => {
   const { email, otp } = req.body;
 
   try {
-    // Find the user by email and OTP, ensuring the OTP is not expired
-    const user = await User.findOne({
-      email,
-      otp,
-      otpExpires: { $gt: Date.now() }, // Check OTP expiration
-    });
-
+    // Find the user by email
+    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: "INVALID OR EXPIRED OTP" }); // Bad request: OTP is invalid or expired
+      return res.status(404).json({ message: "USER NOT FOUND" });
     }
 
-    // Mark the user as verified and clear OTP-related fields
+    // Check OTP validity
+    const isOtpValid = await bcrypt.compare(otp, user.otp);
+    if (!isOtpValid || user.otpExpires < Date.now()) {
+      return res.status(400).json({ message: "INVALID OR EXPIRED OTP" });
+    }
+
+    // Mark user as verified and clear OTP fields
     user.isVerified = true;
-    user.otp = undefined; // Clear OTP
-    user.otpExpires = undefined; // Clear OTP expiration
+    user.otp = undefined;
+    user.otpExpires = undefined;
     await user.save();
 
     res.status(200).json({ message: "ACCOUNT VERIFIED SUCCESSFULLY", user });
   } catch (err) {
-    // Handle unexpected errors during OTP verification
-    res.status(500).json({
-      message: "ERROR DURING OTP VERIFICATION",
-      error: err.message,
-    });
+    res
+      .status(500)
+      .json({ message: "ERROR DURING OTP VERIFICATION", error: err.message });
   }
 };
 
 // Login endpoint
 const login = async (req, res) => {
   const { email, password } = req.body;
-  const secret = process.env.JWT_KEY; // JWT secret key from environment variables
+  const secret = process.env.JWT_KEY; // JWT secret key
 
   try {
-    // Find the user by email
+    // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({
-        message: "USER NOT FOUND", // Not found: User does not exist
-      });
+      return res.status(404).json({ message: "USER NOT FOUND" });
     }
 
     // Check if the user is verified
     if (!user.isVerified) {
-      return res.status(403).json({
-        message: "USER NOT VERIFIED. PLEASE VERIFY ACCOUNT", // Forbidden: User not verified
-      });
+      return res
+        .status(403)
+        .json({ message: "USER NOT VERIFIED. PLEASE VERIFY ACCOUNT" });
     }
 
-    // Compare the provided password with the stored hashed password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({
-        message: "AUTH FAILED", // Unauthorized: Invalid credentials
-      });
+    // Validate password
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    if (!isPasswordMatch) {
+      return res.status(401).json({ message: "INVALID CREDENTIALS" });
     }
 
-    // Generate a JWT token for the user
+    // Generate a JWT token
     const token = jwt.sign({ user: email, userId: user._id }, secret, {
-      expiresIn: "1h", // Token expires in 1 hour
+      expiresIn: "1h",
     });
 
-    // Send success response to the client
     res.status(200).json({
-      message: "AUTH SUCCESSFUL",
+      message: "LOGIN SUCCESSFUL",
       user,
       token,
     });
   } catch (err) {
-    // Handle unexpected errors during login
-    res.status(500).json({
-      message: "ERROR DURING LOGIN",
-      error: err.message,
-    });
+    res.status(500).json({ message: "ERROR DURING LOGIN", error: err.message });
   }
 };
 
-// Export all controller functions
 module.exports = {
   signup,
   verifyOtp,
