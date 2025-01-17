@@ -19,7 +19,7 @@ const VerifyOtp = () => {
   const handleVerifyOtp = async (data) => {
     try {
       // Make the API request to verify OTP
-      const response = await axios.post("URL", {
+      const response = await axios.post("LINK", {
         email: email,
         otp: data.otp,
       });
