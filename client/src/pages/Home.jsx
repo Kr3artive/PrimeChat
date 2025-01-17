@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -22,14 +22,18 @@ const Home = () => {
 
   // Form submission handler for Login and Signup
   const onSubmit = async (data) => {
-    if (data.password !== data.confirmPassword) {
-      alert("Passwords do not match.");
+    if (!isLogin && data.password !== data.confirmPassword) {
+      setMessage({ text: "Passwords do not match", type: "error" });
+      setTimeout(() => setMessage({ text: "", type: "" }), 5000);
       return;
     }
+
     try {
       const endpoint = isLogin ? "/api/login" : "/api/signup"; // Differentiate endpoint
       const formData = new FormData();
-      formData.append("pic", data.pic[0]); // Assuming `pic` is the file input name
+      if (data.pic) formData.append("pic", data.pic[0]); // Assuming `pic` is the file input name
+
+      // Append all other fields except `pic`
       Object.keys(data).forEach((key) => {
         if (key !== "pic") formData.append(key, data[key]);
       });
@@ -37,17 +41,20 @@ const Home = () => {
       const response = await axios.post(endpoint, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      // Navigate to the OTP page and pass the user's email via route state
-      navigate("/verifyotp", { state: { email: data.email } });
-
       console.log(response);
-      
+
       setMessage({
         text: isLogin
           ? "Login successful!"
-          : "Signup successful! An OTP was sent to your mail, Please Verify the OTP.",
+          : "Signup successful! An OTP was sent to your mail. Please verify it.",
         type: "success",
       });
+
+      if (isLogin) {
+        navigate("/chat"); // Navigate to chat on successful login
+      } else {
+        navigate("/verifyotp", { state: { email: data.email } }); // Navigate to OTP verification on successful signup
+      }
     } catch (error) {
       setMessage({
         text:
@@ -234,9 +241,9 @@ const Home = () => {
                     required: "Profile image is required",
                   })}
                 />
-                {errors.profileImage && (
+                {errors.pic && (
                   <p className="text-red-500 text-xs mt-1">
-                    {errors.profileImage.message}
+                    {errors.pic.message}
                   </p>
                 )}
               </div>
@@ -246,9 +253,9 @@ const Home = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-3 mt-6 bg-green-600 text-black font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full py-3 mt-6 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
           >
-            {isLogin ? "Login" : <Link to={"/verifyotp"}>VerifyOtp</Link>}
+            {isLogin ? "Login" : "Sign Up"}
           </button>
         </form>
       </div>
