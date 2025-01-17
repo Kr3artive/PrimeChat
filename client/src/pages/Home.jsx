@@ -29,7 +29,9 @@ const Home = () => {
     }
 
     try {
-      const endpoint = isLogin ? "/api/login" : "/api/signup"; // Differentiate endpoint
+      const endpoint = isLogin
+        ? "https://primechat-t9vo.onrender.com/auth/login"
+        : "https://primechat-t9vo.onrender.com/auth/signup"; // Differentiate endpoint
       const formData = new FormData();
       if (data.pic) formData.append("pic", data.pic[0]); // Assuming `pic` is the file input name
 

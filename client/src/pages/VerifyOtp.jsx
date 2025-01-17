@@ -19,10 +19,13 @@ const VerifyOtp = () => {
   const handleVerifyOtp = async (data) => {
     try {
       // Make the API request to verify OTP
-      const response = await axios.post("LINK", {
-        email: email,
-        otp: data.otp,
-      });
+      const response = await axios.post(
+        "https://primechat-t9vo.onrender.com/auth/verify",
+        {
+          email: email,
+          otp: data.otp,
+        }
+      );
 
       if (response.data.status === "success") {
         setMessage({ text: "OTP verified successfully!", type: "success" });

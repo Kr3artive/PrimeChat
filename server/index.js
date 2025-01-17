@@ -3,7 +3,8 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const chats = require("./data/data");
-const AuthRoutes = require("./src/routes/Auth")
+const AuthRoutes = require("./src/routes/Auth");
+const UserRoutes = require("./src/routes/User");
 
 const index = express();
 
@@ -26,10 +27,11 @@ mongoose
 
 // Route handlers
 index.get("/chats", (req, res) => {
-  res.json(chats)
-})
+  res.json(chats);
+});
 
 index.use("/auth", AuthRoutes);
+index.use("/user", UserRoutes);
 
 // Start the server
 index.listen(SERVER, () => {
