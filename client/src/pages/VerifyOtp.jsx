@@ -1,43 +1,47 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import axios from "axios";
+import { useLocation, useNavigate } from "react-router-dom";
+
 
 const VerifyOtp = () => {
-  const [otp, setOtp] = useState(""); // OTP input state
   const [message, setMessage] = useState({ text: "", type: "" }); // Message state
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const handleVerifyOtp = async () => {
+  const email = location.state?.email;
+
+  const handleVerifyOtp = async (data) => {
     try {
-      // Simulate API call to verify OTP
-      const response = await fakeApiCall(otp); // Replace with your actual API call
+      // Make the API request to verify OTP
+      const response = await axios.post("URL", {
+        email: email,
+        otp: data.otp,
+      });
 
-      if (response.status === "success") {
+      if (response.data.status === "success") {
         setMessage({ text: "OTP verified successfully!", type: "success" });
-      } else if (response.status === "already_authenticated") {
+      } else if (response.data.status === "already_authenticated") {
         setMessage({
           text: "Your account is already verified. Please log in.",
           type: "info",
         });
       }
+      navigate("/")
     } catch (error) {
       setMessage({
-        text: error.message || "Invalid OTP. Please try again.",
+        text: error.response?.data?.message || "Invalid OTP. Please try again.",
         type: "error",
       });
     } finally {
       // Clear the message after 5 seconds
       setTimeout(() => setMessage({ text: "", type: "" }), 5000);
     }
-  };
-
-  // Mock API call (replace with actual API call logic)
-  const fakeApiCall = (otp) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (otp === "123456") resolve({ status: "success" });
-        else if (otp === "already")
-          resolve({ status: "already_authenticated" });
-        else reject(new Error("Invalid OTP"));
-      }, 1000);
-    });
   };
 
   return (
@@ -69,8 +73,9 @@ const VerifyOtp = () => {
           Also check your spam folder.
         </p>
 
-        {/* Input and Button */}
-        <div className="space-y-4">
+        {/* Form */}
+        <form onSubmit={handleSubmit(handleVerifyOtp)} className="space-y-4">
+          {/* OTP Input */}
           <div>
             <label
               htmlFor="otp"
@@ -82,18 +87,28 @@ const VerifyOtp = () => {
               type="text"
               id="otp"
               placeholder="Enter your OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
+              {...register("otp", {
+                required: "OTP is required",
+                pattern: {
+                  value: /^[0-9]{6}$/, // Assuming a 6-digit OTP
+                  message: "OTP must be a 6-digit number",
+                },
+              })}
               className="w-full mt-2 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
             />
+            {errors.otp && (
+              <p className="text-red-500 text-xs mt-1">{errors.otp.message}</p>
+            )}
           </div>
+
+          {/* Submit Button */}
           <button
-            onClick={handleVerifyOtp}
-            className="w-full py-3 bg-green-600 text-black font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+            type="submit"
+            className="w-full py-3 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             Verify
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );

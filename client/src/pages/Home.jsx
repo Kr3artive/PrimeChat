@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Home = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true); // Track if Login or Signup is active
   const [message, setMessage] = useState({ text: "", type: "" }); // Message state
+  const navigate = useNavigate();
 
   const {
     register,
@@ -21,27 +22,32 @@ const Home = () => {
 
   // Form submission handler for Login and Signup
   const onSubmit = async (data) => {
+    if (data.password !== data.confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
     try {
       const endpoint = isLogin ? "/api/login" : "/api/signup"; // Differentiate endpoint
       const formData = new FormData();
-
-      // Append all fields to FormData (for signup with image)
-      for (const key in data) {
-        formData.append(key, data[key]);
-      }
+      formData.append("pic", data.pic[0]); // Assuming `pic` is the file input name
+      Object.keys(data).forEach((key) => {
+        if (key !== "pic") formData.append(key, data[key]);
+      });
 
       const response = await axios.post(endpoint, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+      // Navigate to the OTP page and pass the user's email via route state
+      navigate("/verifyotp", { state: { email: data.email } });
 
+      console.log(response);
+      
       setMessage({
         text: isLogin
           ? "Login successful!"
-          : "Signup successful! You can now log in.",
+          : "Signup successful! An OTP was sent to your mail, Please Verify the OTP.",
         type: "success",
       });
-
-      if (!isLogin) setIsLogin(true); // Switch to login tab after signup
     } catch (error) {
       setMessage({
         text:
@@ -221,10 +227,10 @@ const Home = () => {
                 </label>
                 <input
                   type="file"
-                  id="profileImage"
+                  id="pic"
                   accept="image/*"
                   className="w-full mt-2 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  {...register("profileImage", {
+                  {...register("pic", {
                     required: "Profile image is required",
                   })}
                 />
