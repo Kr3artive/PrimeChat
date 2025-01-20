@@ -65,7 +65,6 @@ const VerifyOtp = () => {
           </div>
         )}
 
-        {/* Heading */}
         <h1 className="text-2xl font-bold text-center text-black mb-4">
           Verify OTP
         </h1>
@@ -76,9 +75,7 @@ const VerifyOtp = () => {
           Also check your spam folder.
         </p>
 
-        {/* Form */}
         <form onSubmit={handleSubmit(handleVerifyOtp)} className="space-y-4">
-          {/* OTP Input */}
           <div>
             <label
               htmlFor="otp"
@@ -104,7 +101,6 @@ const VerifyOtp = () => {
             )}
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             className="w-full py-3 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
