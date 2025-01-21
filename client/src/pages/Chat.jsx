@@ -1,38 +1,14 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+import React from 'react';
+import MenuBar from '../components/MenuBar';
 
 const Chat = () => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:9000/chats");
-        setData(response.data);
-        setLoading(false);
-      } catch (err) {
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
   return (
     <div>
-      <h1>CHAT</h1>
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {data.map((chat, index) => (
-        <div key={index}>
-          <h2>{chat.chatName}</h2>
-        </div>
-      ))}
+      <MenuBar>
+        anything at alllllllllll
+      </MenuBar>
     </div>
-  );
-};
+  )
+}
 
-export default Chat;
+export default Chat
