@@ -48,63 +48,105 @@ const Signup = () => {
   };
 
   return (
-    <div className="auth-form">
-      {message.text && (
-        <div
-          className={`alert ${
-            message.type === "success" ? "success" : "error"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
+    <div className="flex items-center justify-center bg-gray-100 p-4">
+      <div className="w-full max-w-lg bg-white p-6 rounded-lg shadow-md">
+        {message.text && (
+          <div
+            className={`mb-4 p-3 rounded text-center text-white ${
+              message.type === "success" ? "bg-green-500" : "bg-red-500"
+            }`}
+          >
+            {message.text}
+          </div>
+        )}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-black">
+                Full Name
+              </label>
+              <input
+                type="text"
+                {...register("fullName", { required: "Full name is required" })}
+                className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
+              />
+              {errors.fullName && (
+                <p className="text-red-500 text-sm">
+                  {errors.fullName.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-black">
+                Email
+              </label>
+              <input
+                type="email"
+                {...register("email", { required: "Email is required" })}
+                className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
+              />
+              {errors.email && (
+                <p className="text-red-500 text-sm">{errors.email.message}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-black">
+                Password
+              </label>
+              <input
+                type="password"
+                {...register("password", { required: "Password is required" })}
+                className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
+              />
+              {errors.password && (
+                <p className="text-red-500 text-sm">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-black">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                {...register("confirmPassword", {
+                  required: "Confirm password is required",
+                })}
+                className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
+              />
+              {errors.confirmPassword && (
+                <p className="text-red-500 text-sm">
+                  {errors.confirmPassword.message}
+                </p>
+              )}
+            </div>
+          </div>
 
-      <h2>Sign Up</h2>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div>
-          <label>Full Name</label>
-          <input
-            type="text"
-            {...register("fullName", { required: "Full name is required" })}
-          />
-          {errors.fullName && <p>{errors.fullName.message}</p>}
-        </div>
-        <div>
-          <label>Email</label>
-          <input
-            type="email"
-            {...register("email", { required: "Email is required" })}
-          />
-          {errors.email && <p>{errors.email.message}</p>}
-        </div>
-        <div>
-          <label>Password</label>
-          <input
-            type="password"
-            {...register("password", { required: "Password is required" })}
-          />
-          {errors.password && <p>{errors.password.message}</p>}
-        </div>
-        <div>
-          <label>Confirm Password</label>
-          <input
-            type="password"
-            {...register("confirmPassword", {
-              required: "Confirm password is required",
-            })}
-          />
-          {errors.confirmPassword && <p>{errors.confirmPassword.message}</p>}
-        </div>
-        <div>
-          <label>Profile Image</label>
-          <input
-            type="file"
-            {...register("pic", { required: "Profile image is required" })}
-          />
-          {errors.pic && <p>{errors.pic.message}</p>}
-        </div>
-        <button type="submit">Sign Up</button>
-      </form>
+          {/* Profile Image (Full Width) */}
+          <div>
+            <label className="block text-sm font-medium text-black">
+              Profile Image
+            </label>
+            <input
+              type="file"
+              {...register("pic", { required: "Profile image is required" })}
+              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
+            />
+            {errors.pic && (
+              <p className="text-red-500 text-sm">{errors.pic.message}</p>
+            )}
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            className="w-full bg-green-600 text-white font-medium py-2 rounded-md hover:bg-green-700 focus:ring-4 focus:ring-green-500 focus:outline-none"
+          >
+            Sign Up
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

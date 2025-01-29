@@ -22,18 +22,16 @@ const Login = () => {
   const onSubmit = async (data) => {
     try {
       await login(data.email, data.password);
-      setMessage(`AUTHENTICATED AS ${data.email}`);
+      setMessage({ text: `Authenticated as ${data.email}`, type: "success" });
       setTimeout(() => {
-        setMessage("");
-        navigate("/chat"); // Navigate to chat on successful login
-      }, 5000);
+        setMessage({ text: "", type: "" });
+        navigate("/chat");
+      }, 3000);
     } catch (error) {
       setMessage({
-        text: error.response?.data?.message || "LOGIN FAILED. Try again.",
+        text: error.response?.data?.message || "Login failed. Try again.",
         type: "error",
       });
-    } finally {
-      setTimeout(() => setMessage({ text: "", type: "" }), 5000);
     }
   };
 
@@ -44,8 +42,8 @@ const Login = () => {
           <div
             className={`text-center py-2 px-4 rounded mb-4 ${
               message.type === "success"
-                ? "bg-green-100 text-green-500"
-                : "bg-red-100 text-red-700"
+                ? "bg-green-100 text-green-600"
+                : "bg-red-100 text-red-600"
             }`}
           >
             {message.text}
@@ -53,13 +51,13 @@ const Login = () => {
         )}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-black mb-1">
+            <label className="block text-sm font-medium text-black">
               Email
             </label>
             <input
               type="email"
               {...register("email", { required: "Email is required" })}
-              className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500"
+              className="w-full border border-gray-300 p-2 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
             />
             {errors.email && (
               <p className="text-sm text-red-600 mt-1">
@@ -67,20 +65,21 @@ const Login = () => {
               </p>
             )}
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-black">
               Password
             </label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 {...register("password", { required: "Password is required" })}
-                className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full border border-gray-300 p-2 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
               />
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
-                className="absolute right-3 top-2 text-sm text-gray-600 hover:text-gray-800"
+                className="absolute right-3 top-2 text-sm text-black hover:text-gray-800"
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
@@ -91,9 +90,10 @@ const Login = () => {
               </p>
             )}
           </div>
+
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white font-medium py-2 rounded-lg hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-500 focus:outline-none"
+            className="w-full bg-green-600 text-white font-medium py-2 rounded-md hover:bg-green-700 focus:ring-4 focus:ring-green-500 focus:outline-none"
           >
             Login
           </button>
