@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { AuthContext } from "../contexts/AuthContext";
 
 const Login = () => {
+  const { login } = useContext(AuthContext);
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
   const navigate = useNavigate();
@@ -20,16 +21,15 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await axios.post(
-        "https://primechat-t9vo.onrender.com/auth/login",
-        data
-      );
-
-      setMessage({ text: "Login successful!", type: "success" });
-      navigate("/chat"); // Navigate to chat on successful login
+      await login(data.email, data.password);
+      setMessage(`AUTHENTICATED AS ${data.email}`);
+      setTimeout(() => {
+        setMessage("");
+        navigate("/chat"); // Navigate to chat on successful login
+      }, 5000);
     } catch (error) {
       setMessage({
-        text: error.response?.data?.message || "Login failed. Try again.",
+        text: error.response?.data?.message || "LOGIN FAILED. Try again.",
         type: "error",
       });
     } finally {
@@ -44,24 +44,22 @@ const Login = () => {
           <div
             className={`text-center py-2 px-4 rounded mb-4 ${
               message.type === "success"
-                ? "bg-green-100 text-green-700"
+                ? "bg-green-100 text-green-500"
                 : "bg-red-100 text-red-700"
             }`}
           >
             {message.text}
           </div>
         )}
-
-        <h2 className="text-2xl font-bold text-center mb-6">Login</h2>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-black mb-1">
               Email
             </label>
             <input
               type="email"
               {...register("email", { required: "Email is required" })}
-              className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500"
             />
             {errors.email && (
               <p className="text-sm text-red-600 mt-1">
