@@ -27,15 +27,17 @@ mongoose
   .catch((error) => console.log("CONNECTION ERROR", error));
 
 // Route handlers
+index.get("/", (req, res) => {
+  res.send("PrimeChat SERVER IS ACTIVE...");
+});
+
 index.get("/chats", (req, res) => {
   res.json(chats);
 });
 
-
-
 index.use("/auth", AuthRoutes);
 index.use("/user", UserRoutes);
-index.use("/chats", ChatRoutes)
+index.use("/chats", ChatRoutes);
 
 // Start the server
 index.listen(SERVER, () => {
