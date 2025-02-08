@@ -18,11 +18,9 @@ module.exports = (req, res, next) => {
 
     const token = tokenParts[1]; // Extract the actual token
     console.log(token);
-    
 
     // Verify the token using the secret
-    jwt.verify(token, process.env.JWT_KEY, (err,  user) => {
-
+    jwt.verify(token, process.env.JWT_KEY, (err, user, decoded) => {
       if (err) {
         console.error("JWT Verification Error:", err.message);
         return res.status(403).json({ message: "INVALID TOKEN" });

@@ -31,6 +31,8 @@ index.get("/chats", (req, res) => {
   res.json(chats);
 });
 
+
+
 index.use("/auth", AuthRoutes);
 index.use("/user", UserRoutes);
 index.use("/chats", ChatRoutes)
