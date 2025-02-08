@@ -45,7 +45,7 @@ const signup = async (req, res) => {
       pic: imageUrl || null, // Store profile picture URL if available
       isVerified: false, // Account is unverified initially
       otp: await bcrypt.hash(otp, 10), // Store hashed OTP
-      otpExpires: Date.now() + 2 * 60 * 1000, // OTP expires in 2 minutes
+      otpExpires: Date.now() + 5 * 60 * 1000, // OTP expires in 5 minutes
     });
 
     // Save the user to the database
@@ -53,7 +53,7 @@ const signup = async (req, res) => {
 
     // Generate a JWT token for the user
     const token = jwt.sign({ user: email, userId: user._id }, secret, {
-      expiresIn: "1h",
+      expiresIn: "7d",
     });
 
     // Configure the email transporter
@@ -70,7 +70,7 @@ const signup = async (req, res) => {
       from: process.env.EMAIL_USER,
       to: email,
       subject: "VERIFY YOUR PrimeChat ACCOUNT",
-      text: `Hello ${fullname},\n\nYour OTP for verification is: ${otp}. This OTP is valid for 2 minutes.`,
+      text: `Hello ${fullname},\n\nYour OTP for verification is: ${otp}. This OTP is valid for 5 minutes.`,
     };
 
     // Send OTP email
@@ -148,7 +148,7 @@ const login = async (req, res) => {
 
     // Generate a JWT token
     const token = jwt.sign({ user: email, userId: user._id }, secret, {
-      expiresIn: "1h",
+      expiresIn: "7d",
     });
 
     res.status(200).json({

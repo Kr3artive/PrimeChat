@@ -1,11 +1,12 @@
 const Chat = require("../models/chatModel");
 const User = require("../models/userModel");
 
+// accesschat
 const accessChat = async (req, res) => {
   const { userId } = req.body;
 
   if (!userId) {
-    console.log("UserId param not sent with request");
+    console.log("UserId PARAM NOT SENT WITH REQUEST");
     return res.sendStatus(400);
   }
 
@@ -42,22 +43,20 @@ const accessChat = async (req, res) => {
         "users",
         "-password"
       );
-      res.status(200).json(fullChat);
+      res.status(200).json({
+        fullChat,
+      });
     }
   } catch (error) {
-    console.error("Error accessing chat:", error.message);
-    res
-      .status(500)
-      .json({
-        message: "Failed to access or create chat",
-        error: error.message,
-      });
+    console.error("ERROR ACCESSING CHAT:", error.message);
+    res.status(500).json({
+      message: "FAILED TO ACCESS CHAT OR CREATE CHAT",
+      error: error.message,
+    });
   }
 };
 
-// @description     Fetch all chats for a user
-// @route           GET /api/chat/
-// @access          Protected
+// getchats for a particular user
 const fetchChats = async (req, res) => {
   try {
     const chats = await Chat.find({
@@ -82,12 +81,10 @@ const fetchChats = async (req, res) => {
   }
 };
 
-// @description     Create New Group Chat
-// @route           POST /api/chat/group
-// @access          Protected
+// create group chat
 const createGroupChat = async (req, res) => {
   if (!req.body.users || !req.body.name) {
-    return res.status(400).send({ message: "Please Fill all the fields" });
+    return res.status(400).send({ message: "PLEASE FILL THIS FIELDS" });
   }
 
   let users = JSON.parse(req.body.users);
@@ -95,17 +92,17 @@ const createGroupChat = async (req, res) => {
   if (users.length < 2) {
     return res
       .status(400)
-      .send("More than 2 users are required to form a group chat");
+      .send("MORE THAN 2 USERS IS REQUIRED TO FORM A GROUP CHAT");
   }
 
-  users.push(req.user);
+  users.push(req.user._id);
 
   try {
     const groupChat = await Chat.create({
       chatName: req.body.name,
       users: users,
       isGroupChat: true,
-      groupAdmin: req.user,
+      groupAdmin: req.user._id,
     });
 
     const fullGroupChat = await Chat.findOne({ _id: groupChat._id })
@@ -114,16 +111,14 @@ const createGroupChat = async (req, res) => {
 
     res.status(200).json(fullGroupChat);
   } catch (error) {
-    console.error("Error creating group chat:", error.message);
+    console.error("ERROR CREATING GROUP CHAT:", error.message);
     res
       .status(500)
-      .json({ message: "Failed to create group chat", error: error.message });
+      .json({ message: "FAILED TO CREATE GROUP CHAT", error: error.message });
   }
 };
 
-// @desc    Rename Group
-// @route   PUT /api/chat/rename
-// @access  Protected
+// renamegroup chat
 const renameGroup = async (req, res) => {
   const { chatId, chatName } = req.body;
 
@@ -137,21 +132,19 @@ const renameGroup = async (req, res) => {
       .populate("groupAdmin", "-password");
 
     if (!updatedChat) {
-      return res.status(404).json({ message: "Chat Not Found" });
+      return res.status(404).json({ message: "CHAT NOT FOUND" });
     }
 
     res.json(updatedChat);
   } catch (error) {
-    console.error("Error renaming group:", error.message);
+    console.error("ERROR RENAMING GROUP:", error.message);
     res
       .status(500)
-      .json({ message: "Failed to rename group", error: error.message });
+      .json({ message: "FAILED TO RENAME GROUP:", error: error.message });
   }
 };
 
-// @desc    Remove user from Group
-// @route   PUT /api/chat/groupremove
-// @access  Protected
+// remove group chat
 const removeFromGroup = async (req, res) => {
   const { chatId, userId } = req.body;
 
@@ -165,24 +158,20 @@ const removeFromGroup = async (req, res) => {
       .populate("groupAdmin", "-password");
 
     if (!removed) {
-      return res.status(404).json({ message: "Chat Not Found" });
+      return res.status(404).json({ message: "CHAT NOT FOUND" });
     }
 
     res.json(removed);
   } catch (error) {
-    console.error("Error removing user from group:", error.message);
-    res
-      .status(500)
-      .json({
-        message: "Failed to remove user from group",
-        error: error.message,
-      });
+    console.error("ERROR REMOVING USER FROM GROUP:", error.message);
+    res.status(500).json({
+      message: "FAILED TO REMOVE USER",
+      error: error.message,
+    });
   }
 };
 
-// @desc    Add user to Group / Leave
-// @route   PUT /api/chat/groupadd
-// @access  Protected
+// add user to group chat
 const addToGroup = async (req, res) => {
   const { chatId, userId } = req.body;
 
@@ -196,15 +185,15 @@ const addToGroup = async (req, res) => {
       .populate("groupAdmin", "-password");
 
     if (!added) {
-      return res.status(404).json({ message: "Chat Not Found" });
+      return res.status(404).json({ message: "CHAT NOT FOUND" });
     }
 
     res.json(added);
   } catch (error) {
-    console.error("Error adding user to group:", error.message);
+    console.error("ERROR ADDING USER TO GROUP:", error.message);
     res
       .status(500)
-      .json({ message: "Failed to add user to group", error: error.message });
+      .json({ message: "FAILED TO ADD USER TO GROUP CHAT:", error: error.message });
   }
 };
 

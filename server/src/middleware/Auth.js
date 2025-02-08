@@ -1,24 +1,43 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = (req, res, next) => {
-  // Check if the Authorization header exists
-  const token = req.headers["Authorization"];
+  try {
+    console.log("Request Headers:", req.headers);
 
-  if (!token) return res.status(403).send("TOKEN IS REQUIRED");
+    // Check if the Authorization header exists
+    const authHeader = req.headers["authorization"];
+    if (!authHeader) {
+      return res.status(403).json({ message: "TOKEN IS REQUIRED" });
+    }
 
-  // Split the "Bearer <token>" and extract the token
-  const tokenParts = token.split(" "); // "Bearer" and "<token>"
-  if (tokenParts.length !== 2) {
-    return res.status(403).send("INVALID TOKEN FORMAT");
+    // Ensure the header starts with "Bearer"
+    const tokenParts = authHeader.split(" ");
+    if (tokenParts.length !== 2 || tokenParts[0] !== "Bearer") {
+      return res.status(403).json({ message: "INVALID TOKEN FORMAT" });
+    }
+
+    const token = tokenParts[1]; // Extract the actual token
+    console.log(token);
+    
+
+    // Verify the token using the secret
+    jwt.verify(token, process.env.JWT_KEY, (err,  user) => {
+
+      if (err) {
+        console.error("JWT Verification Error:", err.message);
+        return res.status(403).json({ message: "INVALID TOKEN" });
+      }
+
+      console.log("Decoded Token:", user);
+
+      // Attach the user data to the request object
+      req.user = user;
+
+      // Proceed to the next middleware or route handler
+      next();
+    });
+  } catch (error) {
+    console.error("Middleware Error:", error.message);
+    res.status(500).json({ message: "INTERNAL SERVER ERROR" });
   }
-
-  const tokenString = tokenParts[1]; // This is the actual token
-
-  // Verify the token using the JWT secret
-  jwt.verify(tokenString, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).send("INVALID TOKEN");
-
-    req.user = user; // Attach the user data to the request object
-    next(); // Continue to the next middleware or route handler
-  });
 };

@@ -5,6 +5,7 @@ const cors = require("cors");
 const chats = require("./data/data");
 const AuthRoutes = require("./src/routes/Auth");
 const UserRoutes = require("./src/routes/User");
+const ChatRoutes = require("./src/routes/Chat");
 
 const index = express();
 
@@ -32,6 +33,7 @@ index.get("/chats", (req, res) => {
 
 index.use("/auth", AuthRoutes);
 index.use("/user", UserRoutes);
+index.use("/chats", ChatRoutes)
 
 // Start the server
 index.listen(SERVER, () => {

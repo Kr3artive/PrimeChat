@@ -4,13 +4,19 @@ import "./index.css";
 import App from "./App.jsx";
 import { ModalProvider } from "./context/ModalContext.jsx";
 import { AuthProvider } from "./contexts/AuthContext.jsx";
+import ChatProvider from "./contexts/ChatContext.jsx";
+import { BrowserRouter } from "react-router-dom";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <AuthProvider>
-      <ModalProvider>
-        <App />
-      </ModalProvider>
-    </AuthProvider>
+    <BrowserRouter>
+      <ChatProvider>
+        <AuthProvider>
+          <ModalProvider>
+            <App />
+          </ModalProvider>
+        </AuthProvider>
+      </ChatProvider>
+    </BrowserRouter>
   </StrictMode>
 );
