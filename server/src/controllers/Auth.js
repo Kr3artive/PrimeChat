@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt"); // For password hashing
 const jwt = require("jsonwebtoken"); // For creating JWT tokens
 const crypto = require("crypto"); // For generating random OTPs
 const nodemailer = require("nodemailer"); // For sending emails
-const cloudinary = require("../utils/cloudinary"); // Cloudinary config
+const cloudinary = require("../config/cloudinary"); // Cloudinary config
 const fs = require("fs"); // File system module for cleanup
 const User = require("../models/userModel"); // Mongoose model for User
 
