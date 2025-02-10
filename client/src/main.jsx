@@ -10,13 +10,13 @@ import { BrowserRouter } from "react-router-dom";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <ChatProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <ChatProvider>
           <ModalProvider>
             <App />
           </ModalProvider>
-        </AuthProvider>
-      </ChatProvider>
+        </ChatProvider>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>
 );

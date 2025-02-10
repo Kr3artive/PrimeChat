@@ -32,7 +32,9 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     localStorage.removeItem("token");
+    delete axios.defaults.headers.common["authorization"];
   };
+
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout }}>

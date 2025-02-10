@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { IoIosNotifications } from "react-icons/io";
+import { ChatState } from "../contexts/ChatContext";
 
 const UserDetails = ({ onClose }) => {
   return (
@@ -12,8 +13,8 @@ const UserDetails = ({ onClose }) => {
             alt="User"
             className="rounded-full h-16 w-16 object-cover mb-4"
           />
-          <p className="text-gray-700 text-base">John Doe</p>
-          <p className="text-gray-500 text-sm">johndoe@example.com</p>
+          <p className="text-black text-base">John Doe</p>
+          <p className="text-black text-sm">johndoe@example.com</p>
         </div>
         <button
           className="mt-4 bg-red-500 text-white px-4 py-2 rounded-md w-full hover:bg-red-600 text-sm"
@@ -29,6 +30,7 @@ const UserDetails = ({ onClose }) => {
 const SideTab = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const { Logout } = ChatState()
 
   return (
     <div className="relative text-lg flex justify-between items-center p-2 gap-3">
@@ -58,7 +60,7 @@ const SideTab = () => {
               >
                 Profile
               </li>
-              <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+              <li onClick={Logout} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
                 Logout
               </li>
             </ul>
