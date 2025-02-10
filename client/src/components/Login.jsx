@@ -7,6 +7,7 @@ const Login = () => {
   const { login } = useContext(AuthContext);
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const {
@@ -20,6 +21,7 @@ const Login = () => {
   };
 
   const onSubmit = async (data) => {
+    setLoading(true);
     try {
       await login(data.email, data.password);
       setMessage({ text: `Authenticated as ${data.email}`, type: "success" });
@@ -32,6 +34,8 @@ const Login = () => {
         text: error.response?.data?.message || "Login failed. Try again.",
         type: "error",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -93,9 +97,17 @@ const Login = () => {
 
           <button
             type="submit"
-            className="w-full bg-green-600 text-white font-medium py-2 rounded-md hover:bg-green-700 focus:ring-4 focus:ring-green-500 focus:outline-none"
+            className="w-full bg-green-600 text-white font-medium py-2 rounded-md hover:bg-green-700 focus:ring-4 focus:ring-green-500 focus:outline-none flex justify-center items-center"
+            disabled={loading}
           >
-            Login
+            {loading ? (
+              <svg
+                className="animate-spin h-5 w-5 mr-3 border-2 border-white border-t-transparent rounded-full"
+                viewBox="0 0 24 24"
+              ></svg>
+            ) : (
+              "Login"
+            )}
           </button>
         </form>
       </div>
