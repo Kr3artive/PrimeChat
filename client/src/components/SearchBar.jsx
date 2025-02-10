@@ -1,48 +1,70 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import axios from "axios";
 import { CiSearch } from "react-icons/ci";
-import { chats } from "../demo/chatdata";
 
 const SearchBar = () => {
-  const [search, setSearch] = useState("");
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Handle search input
-  const handleSearch = (e) => {
-    const value = e.target.value;
-    setSearch(value);
+  const { register, handleSubmit, setValue } = useForm();
 
-    if (value.trim() === "") {
+  const onSubmit = async (data) => {
+    if (!data.search.trim()) {
       setFilteredUsers([]);
-      setIsModalOpen(false); 
-    } else {
-      const filtered = chats.filter((user) =>
-        user.name.toLowerCase().includes(value.toLowerCase())
+      setIsModalOpen(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `http://localhost:9000/user/alluser?search=${data.search}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-      setFilteredUsers(filtered);
+
+      setFilteredUsers(response.data);
+    } catch (error) {
+      console.error("ERROR FETCHING USERS:", error);
+      setFilteredUsers([]);
+    } finally {
+      setLoading(false);
       setIsModalOpen(true);
+      setValue("search", ""); 
     }
   };
 
-  // Close modal function
   const closeModal = () => {
     setIsModalOpen(false);
-    setSearch("");
   };
 
   return (
     <div className="relative">
-      {/* Search Input */}
-      <div className="flex items-center gap-2 h-10 px-2 border border-black rounded-full">
-        <CiSearch className="text-lg" />
+      {/* Search Form */}
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex items-center gap-2 h-10 px-2 border border-black rounded-full"
+      >
+        <CiSearch className="text-2xl" />
         <input
           type="text"
           placeholder="Search User"
-          value={search}
-          onChange={handleSearch}
+          {...register("search")}
           className="outline-none w-full"
         />
-      </div>
+        <button
+          type="submit"
+          className="bg-green-600 text-white px-4 py-1 rounded-full hover:bg-gray-800 transition"
+        >
+          Search
+        </button>
+      </form>
 
       {/* Modal for Search Results */}
       {isModalOpen && (
@@ -58,21 +80,24 @@ const SearchBar = () => {
             <h2 className="text-lg font-semibold mb-2">Search Results</h2>
 
             <div className="max-h-60 overflow-y-auto">
-              {filteredUsers.length > 0 ? (
+              {loading ? (
+                <p className="text-center p-2">Loading...</p>
+              ) : filteredUsers.length > 0 ? (
                 filteredUsers.map((user) => (
                   <div
-                    key={user.id}
+                    key={user._id}
                     className="flex justify-between items-center p-3 border-b hover:bg-gray-100 cursor-pointer"
                   >
                     <div>
-                      <h3 className="text-sm font-semibold">{user.name}</h3>
-                      <p className="text-xs text-black">{user.message}</p>
+                      <h3 className="text-sm font-semibold">{user.fullname}</h3>
+                      <p className="text-xs text-black">{user.email}</p>
                     </div>
-                    <span className="text-xs text-black">{user.time}</span>
                   </div>
                 ))
               ) : (
-                <p className="text-center p-2 text-black">No users found</p>
+                <p className="text-center p-2 text-black font-semibold">
+                  No users found
+                </p>
               )}
             </div>
           </div>
