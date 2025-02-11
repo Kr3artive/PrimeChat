@@ -6,8 +6,8 @@ import { AuthContext } from "../contexts/AuthContext";
 const Login = () => {
   const { login } = useContext(AuthContext);
   const [showPassword, setShowPassword] = useState(false);
-  const [message, setMessage] = useState({ text: "", type: "" });
   const [loading, setLoading] = useState(false);
+  const [modal, setModal] = useState({ show: false, text: "", type: "" });
   const navigate = useNavigate();
 
   const {
@@ -20,20 +20,28 @@ const Login = () => {
     setShowPassword(!showPassword);
   };
 
+  const showModal = (text, type) => {
+    setModal({ show: true, text, type });
+
+    setTimeout(() => {
+      setModal({ show: false, text: "", type: "" });
+
+      if (type === "success") {
+        navigate("/chat");
+      }
+    }, 3000);
+  };
+
   const onSubmit = async (data) => {
     setLoading(true);
     try {
       await login(data.email, data.password);
-      setMessage({ text: `Authenticated as ${data.email}`, type: "success" });
-      setTimeout(() => {
-        setMessage({ text: "", type: "" });
-        navigate("/chat");
-      }, 3000);
+      showModal(`AUTHENTICATED AS ${data.email}`, "success");
     } catch (error) {
-      setMessage({
-        text: error.response?.data?.message || "Login failed. Try again.",
-        type: "error",
-      });
+      showModal(
+        error.response?.data?.message || "LOGIN FAILED, PLEASE TRY AGAIN.",
+        "error"
+      );
     } finally {
       setLoading(false);
     }
@@ -42,17 +50,6 @@ const Login = () => {
   return (
     <div className="flex items-center justify-center bg-gray-100 px-4">
       <div className="bg-white shadow-md rounded-lg w-full max-w-md p-6">
-        {message.text && (
-          <div
-            className={`text-center py-2 px-4 rounded mb-4 ${
-              message.type === "success"
-                ? "bg-green-100 text-green-600"
-                : "bg-red-100 text-red-600"
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-black">
@@ -111,6 +108,18 @@ const Login = () => {
           </button>
         </form>
       </div>
+
+      {modal.show && (
+        <div className="fixed top-5 right-5 bg-white shadow-lg rounded-lg p-4 w-80 transition-opacity duration-300">
+          <p
+            className={`text-lg ${
+              modal.type === "success" ? "text-green-700" : "text-red-600"
+            }`}
+          >
+            {modal.text}
+          </p>
+        </div>
+      )}
     </div>
   );
 };

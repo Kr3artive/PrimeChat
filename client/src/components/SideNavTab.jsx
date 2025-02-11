@@ -4,7 +4,7 @@ import { ChatState } from "../contexts/ChatContext";
 
 const UserDetails = ({ onClose }) => {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-2">
       <div className="bg-white p-6 rounded-lg shadow-lg w-80">
         <h2 className="text-lg font-semibold mb-4">User Profile</h2>
         <div className="flex flex-col items-center">
@@ -34,7 +34,7 @@ const SideTab = () => {
 
   return (
     <div className="relative text-lg flex justify-between items-center p-2 gap-3">
-      <IoIosNotifications className="cursor-pointer" />
+      <IoIosNotifications size={30} className="cursor-pointer" />
       <div className="relative">
         <div
           className="border-2 border-green-400 rounded-full h-9 w-9 cursor-pointer"
@@ -50,7 +50,7 @@ const SideTab = () => {
         {/* Dropdown menu */}
         {isOpen && (
           <div className="absolute right-0 mt-2 w-36 bg-white border rounded-lg shadow-lg text-sm">
-            <ul className="py-2 text-gray-700">
+            <ul className="py-2 text-black">
               <li
                 className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                 onClick={() => {

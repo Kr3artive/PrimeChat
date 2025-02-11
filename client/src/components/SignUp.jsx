@@ -5,6 +5,7 @@ import axios from "axios";
 
 const Signup = () => {
   const [message, setMessage] = useState({ text: "", type: "" });
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const {
@@ -13,12 +14,26 @@ const Signup = () => {
     formState: { errors },
   } = useForm();
 
+  const showMessage = (text, type) => {
+    setMessage({ text, type });
+
+    setTimeout(() => {
+      setMessage({ text: "", type: "" });
+
+      // Redirect only if it's a success message
+      if (type === "success") {
+        navigate("/verifyotp", { state: { email: text.split(" ")[2] } });
+      }
+    }, 3000);
+  };
+
   const onSubmit = async (data) => {
     if (data.password !== data.confirmPassword) {
-      setMessage({ text: "Passwords do not match", type: "error" });
+      showMessage("Passwords do not match", "error");
       return;
     }
 
+    setLoading(true);
     const formData = new FormData();
     Object.keys(data).forEach((key) => {
       if (key !== "pic") formData.append(key, data[key]);
@@ -34,16 +49,17 @@ const Signup = () => {
         }
       );
 
-      setMessage({
-        text: "Signup successful! Verify your email.",
-        type: "success",
-      });
-      navigate("/verifyotp", { state: { email: data.email } });
+      showMessage(
+        `SIGNUP SUCCESSFULL! VERIFY YOUR EMAIL ${data.email}`,
+        "success"
+      );
     } catch (error) {
-      setMessage({
-        text: error.response?.data?.message || "Signup failed. Try again.",
-        type: "error",
-      });
+      showMessage(
+        error.response?.data?.message || "SIGNUP FAILED, PLEASE TRY AGAIN.",
+        "error"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -52,13 +68,14 @@ const Signup = () => {
       <div className="w-full max-w-lg bg-white p-6 rounded-lg shadow-md">
         {message.text && (
           <div
-            className={`mb-4 p-3 rounded text-center text-white ${
-              message.type === "success" ? "bg-green-500" : "bg-red-500"
+            className={`fixed top-5 right-5 bg-white shadow-lg rounded-lg p-4 w-80 transition-opacity duration-300 ${
+              message.type === "success" ? "text-green-600" : "text-red-600"
             }`}
           >
             {message.text}
           </div>
         )}
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -122,8 +139,6 @@ const Signup = () => {
               )}
             </div>
           </div>
-
-          {/* Profile Image (Full Width) */}
           <div>
             <label className="block text-sm font-medium text-black">
               Profile Image
@@ -137,13 +152,17 @@ const Signup = () => {
               <p className="text-red-500 text-sm">{errors.pic.message}</p>
             )}
           </div>
-
-          {/* Submit Button */}
+          
           <button
             type="submit"
-            className="w-full bg-green-600 text-white font-medium py-2 rounded-md hover:bg-green-700 focus:ring-4 focus:ring-green-500 focus:outline-none"
+            className="w-full bg-green-600 text-white font-medium py-2 rounded-md hover:bg-green-700 focus:ring-4 focus:ring-green-500 focus:outline-none flex items-center justify-center"
+            disabled={loading}
           >
-            Sign Up
+            {loading ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              "Sign Up"
+            )}
           </button>
         </form>
       </div>

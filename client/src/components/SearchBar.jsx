@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import { CiSearch } from "react-icons/ci";
+import { IoIosCloseCircle } from "react-icons/io";
 
 const SearchBar = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -44,6 +45,7 @@ const SearchBar = () => {
     setIsModalOpen(false);
   };
 
+
   return (
     <div className="relative">
       {/* Search Form */}
@@ -68,13 +70,13 @@ const SearchBar = () => {
 
       {/* Modal for Search Results */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-2 z-50">
           <div className="bg-white w-96 rounded-lg shadow-lg p-4 relative">
             <button
               onClick={closeModal}
-              className="absolute top-2 right-2 text-black"
+              className="absolute top-2 right-2 text-red-600"
             >
-              ✖
+              <IoIosCloseCircle size={25} />
             </button>
 
             <h2 className="text-lg font-semibold mb-2">Search Results</h2>
