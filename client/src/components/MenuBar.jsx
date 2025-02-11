@@ -5,12 +5,20 @@ import NewButton from "./NewButton";
 import { ModalContext } from "../contexts/ModalContext";
 import CreateGroupChatModal from "./CreateGroupChatModal";
 import { ChatState } from "../contexts/ChatContext";
-import ChatWindow from "./ChatWindow"; // Component to display selected chat
+import ChatWindow from "./ChatWindow"
+import { getSender } from "../config/chatlogics";
 
 const MenuBar = ({ children }) => {
   const { openCreateGroupChatModal } = useContext(ModalContext);
-  const { chats, selectedchat, setSelectedchat, fetchChats, loading, error } =
-    ChatState();
+  const {
+    chats,
+    selectedchat,
+    setSelectedchat,
+    fetchChats,
+    loading,
+    error,
+    user,
+  } = ChatState();
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -71,7 +79,11 @@ const MenuBar = ({ children }) => {
                 }}
               >
                 <div className="flex flex-col gap-1">
-                  <span className="font-semibold">{chat.chatName}</span>
+                  <span className="font-semibold">
+                    {chat.isGroupChat
+                      ? chat.chatName
+                      : getSender(user, chat.users)}
+                  </span>
                   <span className="text-sm">
                     {chat.lastMessage || "No messages yet"}
                   </span>
