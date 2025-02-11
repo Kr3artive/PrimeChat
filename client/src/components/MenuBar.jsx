@@ -1,40 +1,19 @@
 import { useContext, useEffect, useState } from "react";
-import axios from "axios";
 import { HiMenu } from "react-icons/hi";
 import { IoIosCloseCircle } from "react-icons/io";
 import NewButton from "./NewButton";
 import { ModalContext } from "../contexts/ModalContext";
 import CreateGroupChatModal from "./CreateGroupChatModal";
+import { ChatState } from "../contexts/ChatContext";
+import ChatWindow from "./ChatWindow"; // Component to display selected chat
 
 const MenuBar = ({ children }) => {
   const { openCreateGroupChatModal } = useContext(ModalContext);
-  const [chats, setChats] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [menuOpen, setMenuOpen] = useState(false); // Mobile menu state
+  const { chats, selectedchat, setSelectedchat, fetchChats, loading, error } =
+    ChatState();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const fetchChats = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get(
-          "http://localhost:9000/chats/getchat",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        setChats(response.data);
-      } catch (err) {
-        console.error("Error fetching chats:", err);
-        setError("NETWORK ERROR, PLEASE CHECK YOUR CONNECTION");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchChats();
   }, []);
 
@@ -55,7 +34,6 @@ const MenuBar = ({ children }) => {
           menuOpen ? "translate-x-0" : "-translate-x-full"
         } transition-transform duration-300 ease-in-out md:translate-x-0 shadow-lg`}
       >
-        {/* Close Button (Inside the menu, top-right) */}
         <button
           className="md:hidden absolute top-4 right-4 text-red-600"
           onClick={() => setMenuOpen(false)}
@@ -69,7 +47,7 @@ const MenuBar = ({ children }) => {
             content={"New Group Chat"}
             onclick={() => {
               openCreateGroupChatModal();
-              setMenuOpen(false); // Close menu when opening modal
+              setMenuOpen(false);
             }}
           />
         </div>
@@ -84,7 +62,13 @@ const MenuBar = ({ children }) => {
               <li
                 key={chat._id}
                 title={chat.lastMessage || "No messages yet"}
-                className="bg-green-200 w-full rounded-lg my-4 h-16 flex justify-between items-end pb-2.5 pt-1.5 px-2 hover:cursor-pointer hover:bg-green-300 transition-colors duration-500"
+                className={`bg-green-200 w-full rounded-lg my-4 h-16 flex justify-between items-end pb-2.5 pt-1.5 px-2 hover:cursor-pointer hover:bg-green-300 transition-colors duration-500 ${
+                  selectedchat?._id === chat._id ? "bg-green-400" : ""
+                }`}
+                onClick={() => {
+                  setSelectedchat(chat);
+                  setMenuOpen(false);
+                }}
               >
                 <div className="flex flex-col gap-1">
                   <span className="font-semibold">{chat.chatName}</span>
@@ -103,11 +87,16 @@ const MenuBar = ({ children }) => {
 
       {/* Chat Messages Area */}
       <div className="bg-white rounded-xl md:w-3/4 w-full p-4">
-        {children}
+        {selectedchat ? (
+          <ChatWindow chat={selectedchat} />
+        ) : (
+          <p className="text-center text-gray-600">
+            Select a chat to start messaging
+          </p>
+        )}
       </div>
 
-      {/* Modal appears on top of everything */}
-      <div className="absolute z-[100] ">
+      <div className="absolute z-[100]">
         <CreateGroupChatModal />
       </div>
     </div>

@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 // import { ChatState } from '../contexts/ChatContext';
 
 const Chat = () => {
-  // const {user} = ChatState()
+  
   return (
     <div>
       <Navbar/>

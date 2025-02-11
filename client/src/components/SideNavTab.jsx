@@ -30,7 +30,7 @@ const UserDetails = ({ onClose }) => {
 const SideTab = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const { Logout } = ChatState()
+  const { Logout } = ChatState();
 
   return (
     <div className="relative text-lg flex justify-between items-center p-2 gap-3">
@@ -60,7 +60,10 @@ const SideTab = () => {
               >
                 Profile
               </li>
-              <li onClick={Logout} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+              <li
+                onClick={Logout}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              >
                 Logout
               </li>
             </ul>

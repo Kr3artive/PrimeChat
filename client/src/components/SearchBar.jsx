@@ -3,12 +3,14 @@ import { useForm } from "react-hook-form";
 import axios from "axios";
 import { CiSearch } from "react-icons/ci";
 import { IoIosCloseCircle } from "react-icons/io";
+import { ChatState } from "../contexts/ChatContext";
 
 const SearchBar = () => {
+  const { setChats } = ChatState();
+  // const {user} = ChatState()
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const { register, handleSubmit, setValue } = useForm();
 
   const onSubmit = async (data) => {
@@ -22,7 +24,7 @@ const SearchBar = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:9000/user/alluser?search=${data.search}`,
+        `https://primechat-t9vo.onrender.com/user/alluser?search=${data.search}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -37,13 +39,46 @@ const SearchBar = () => {
     } finally {
       setLoading(false);
       setIsModalOpen(true);
-      setValue("search", ""); 
+      setValue("search", "");
     }
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
   };
+
+  const accessChat = async (userId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        "https://primechat-t9vo.onrender.com/chats/accesschat",
+        { userId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const newChat = response.data;
+
+      // Check if the chat already exists in fetchChats
+      setChats((prevChats) => {
+        const chatExists = prevChats.find((chat) => chat._id === newChat._id);
+
+        if (!chatExists) {
+          return [newChat, ...prevChats]; // Add only if it doesn't exist
+        }
+
+        return prevChats; // If it exists, return the current state
+      });
+
+      console.log("Chat Accessed:", newChat);
+    } catch (error) {
+      console.error("Error accessing chat:", error);
+    }
+  };
+
 
 
   return (
@@ -89,6 +124,7 @@ const SearchBar = () => {
                   <div
                     key={user._id}
                     className="flex justify-between items-center p-3 border-b hover:bg-gray-100 cursor-pointer"
+                    onClick={() => accessChat(user._id)}
                   >
                     <div>
                       <h3 className="text-sm font-semibold">{user.fullname}</h3>
