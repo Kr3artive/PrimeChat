@@ -5,7 +5,7 @@ import NewButton from "./NewButton";
 import { ModalContext } from "../contexts/ModalContext";
 import CreateGroupChatModal from "./CreateGroupChatModal";
 import { ChatState } from "../contexts/ChatContext";
-import ChatWindow from "./ChatWindow"
+import ChatWindow from "./ChatWindow";
 import { getSender } from "../config/chatlogics";
 
 const MenuBar = ({ children }) => {
@@ -19,6 +19,7 @@ const MenuBar = ({ children }) => {
     error,
     user,
   } = ChatState();
+
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -66,31 +67,37 @@ const MenuBar = ({ children }) => {
           ) : error ? (
             <p className="text-center text-red-600">{error}</p>
           ) : chats.length > 0 ? (
-            chats.map((chat) => (
-              <li
-                key={chat._id}
-                title={chat.lastMessage || "No messages yet"}
-                className={`bg-green-200 w-full rounded-lg my-4 h-16 flex justify-between items-end pb-2.5 pt-1.5 px-2 hover:cursor-pointer hover:bg-green-300 transition-colors duration-500 ${
-                  selectedchat?._id === chat._id ? "bg-green-400" : ""
-                }`}
-                onClick={() => {
-                  setSelectedchat(chat);
-                  setMenuOpen(false);
-                }}
-              >
-                <div className="flex flex-col gap-1">
-                  <span className="font-semibold">
-                    {chat.isGroupChat
-                      ? chat.chatName
-                      : getSender(user, chat.users)}
-                  </span>
-                  <span className="text-sm">
-                    {chat.lastMessage || "No messages yet"}
-                  </span>
-                </div>
-                <p className="text-xs text-green-800">{chat.updatedAt}</p>
-              </li>
-            ))
+            chats.map((chat) => {
+              const chatName = chat.isGroupChat
+                ? chat.chatName || !user 
+                : getSender(user, chat.users);
+
+              console.log("Chat Users:", chat.users);
+              console.log("Logged-in User:", user);
+              console.log("Computed Sender:", getSender(user, chat.users));
+
+              return (
+                <li
+                  key={chat._id}
+                  title={chat.lastMessage || "No messages yet"}
+                  className={`bg-green-200 w-full rounded-lg my-4 h-16 flex justify-between items-end pb-2.5 pt-1.5 px-2 hover:cursor-pointer hover:bg-green-300 transition-colors duration-500 ${
+                    selectedchat?._id === chat._id ? "bg-green-400" : ""
+                  }`}
+                  onClick={() => {
+                    setSelectedchat(chat);
+                    setMenuOpen(false);
+                  }}
+                >
+                  <div className="flex flex-col gap-1">
+                    <span className="font-semibold">{chatName}</span>
+                    <span className="text-sm">
+                      {chat.lastMessage || "No messages yet"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-green-800">{chat.updatedAt}</p>
+                </li>
+              );
+            })
           ) : (
             <p className="text-center text-black">No chats available</p>
           )}
