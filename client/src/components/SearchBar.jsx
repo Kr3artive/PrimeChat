@@ -6,7 +6,7 @@ import { IoIosCloseCircle } from "react-icons/io";
 import { ChatState } from "../contexts/ChatContext";
 
 const SearchBar = () => {
-  const { setChats, setSelectedchat } = ChatState(); 
+  const { setChats, setSelectedchat } = ChatState();
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -67,9 +67,13 @@ const SearchBar = () => {
       });
 
       setSelectedchat(newChat); // Set the chat as active
-      setIsModalOpen(false); // Close search modal
 
       console.log("Chat Opened:", newChat);
+
+      // Close search modal after setting selected chat
+      setTimeout(() => {
+        setIsModalOpen(false);
+      }, 100); // Small delay to ensure chat state updates first
     } catch (error) {
       console.error("Error accessing chat:", error);
     }

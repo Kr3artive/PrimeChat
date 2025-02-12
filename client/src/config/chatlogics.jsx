@@ -39,17 +39,10 @@ export const isSameUser = (messages, m, i) => {
 };
 
 export const getSender = (loggedUser, users) => {
-  if (!Array.isArray(users) || users.length < 2) {
-    console.error("Invalid users array in getSender:", users);
-    return "Sime Abere";
-  }
-
   return users[0]._id === loggedUser._id
     ? users[1].fullname
     : users[0].fullname;
 };
-
-;
 
 export const getSenderFull = (loggedUser, users) => {
   return users[0]._id === loggedUser._id ? users[1] : users[0];

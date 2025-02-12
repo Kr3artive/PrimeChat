@@ -9,7 +9,9 @@ import ChatWindow from "./ChatWindow";
 import { getSender } from "../config/chatlogics";
 
 const MenuBar = ({ children }) => {
-  const [loogedUser, setLoggedUser] = useState();
+  const [loggedUser, setLoggedUser] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
   const { openCreateGroupChatModal } = useContext(ModalContext);
   const {
     chats,
@@ -21,12 +23,24 @@ const MenuBar = ({ children }) => {
     user,
   } = ChatState();
 
-  const [menuOpen, setMenuOpen] = useState(false);
-
   useEffect(() => {
-    setLoggedUser(JSON.parse(localStorage.getItem("userInfo")));
+    const storedUser = localStorage.getItem("userInfo");
+    if (storedUser) {
+      setLoggedUser(JSON.parse(storedUser));
+    }
     fetchChats();
-  }, []);
+  }, [fetchChats]);
+
+  const getChatName = (chat, loggedUser) => {
+    if (!chat) return "No Chat Selected";
+
+    if (chat.isGroupChat) {
+      return chat.chatName;
+    } else if (loggedUser && chat.users.length > 0) {
+      return getSender(loggedUser, chat.users);
+    }
+    return "Unknown User";
+  };
 
   return (
     <div className="bg-green-300 flex flex-col md:flex-row gap-5 p-5 min-h-screen relative">
@@ -70,11 +84,7 @@ const MenuBar = ({ children }) => {
             <p className="text-center text-red-600">{error}</p>
           ) : chats.length > 0 ? (
             chats.map((chat) => {
-              const chatName = chat.isGroupChat
-                ? chat.chatName
-                : chat.users.length > 0
-                ? getSender(user, chat.users)
-                : "Private Chat";
+              const chatName = getChatName(chat, loggedUser);
 
               console.log("Chat:", chat);
               console.log("Users in chat:", chat.users);
@@ -99,7 +109,6 @@ const MenuBar = ({ children }) => {
                       {chat.lastMessage || "No messages yet"}
                     </span>
                   </div>
-                  <p className="text-xs text-green-800">{chat.updatedAt}</p>
                 </li>
               );
             })
