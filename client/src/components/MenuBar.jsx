@@ -66,7 +66,7 @@ const MenuBar = ({ children }) => {
           <IoIosCloseCircle size={30} />
         </button>
 
-        <div className="flex justify-between mx-4 mt-14">
+        <div className="flex gap-2 justify-between mx-4 mt-14">
           <h3 className="text-2xl">My Chats</h3>
           <NewButton
             content={"New Group Chat"}
