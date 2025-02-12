@@ -37,6 +37,8 @@ const accessChat = async (req, res) => {
         isGroupChat: false,
         users: [req.user._id, userId],
       };
+      console.log("Creating chat with users:", req.user._id, userId);
+
 
       const createdChat = await Chat.create(chatData);
       const fullChat = await Chat.findOne({ _id: createdChat._id }).populate(
@@ -193,7 +195,10 @@ const addToGroup = async (req, res) => {
     console.error("ERROR ADDING USER TO GROUP:", error.message);
     res
       .status(500)
-      .json({ message: "FAILED TO ADD USER TO GROUP CHAT:", error: error.message });
+      .json({
+        message: "FAILED TO ADD USER TO GROUP CHAT:",
+        error: error.message,
+      });
   }
 };
 

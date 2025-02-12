@@ -1,13 +1,13 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
-import axios from "axios"; 
+import axios from "axios";
 
 const ChatContext = createContext();
 
 const ChatProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [selectedchat, setSelectedchat] = useState()
+  const [selectedchat, setSelectedchat] = useState();
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,34 +16,36 @@ const ChatProvider = ({ children }) => {
 
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-    setUser(userInfo);
-
     if (!userInfo) {
       navigate("/");
+    } else {
+      setUser(userInfo);
     }
   }, []);
 
-   const fetchChats = async () => {
-     try {
-       const token = localStorage.getItem("token");
-       const response = await axios.get(
-         "https://primechat-t9vo.onrender.com/chats/getchat",
-         {
-           headers: { Authorization: `Bearer ${token}` },
-         }
-       );
-       setChats(response.data);
-     } catch (err) {
-       console.error("Error fetching chats:", err);
-       setError("NETWORK ERROR, PLEASE CHECK YOUR CONNECTION");
-     } finally {
-       setLoading(false);
-     }
-   };
+  const fetchChats = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        "https://primechat-t9vo.onrender.com/chats/getchat",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setChats(response.data);
+    } catch (err) {
+      console.error("Error fetching chats:", err);
+      setError("NETWORK ERROR, PLEASE CHECK YOUR CONNECTION");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-   useEffect(() => {
-     fetchChats(); // Fetch chats when the app loads
-   }, []);
+  useEffect(() => {
+    if (user) {
+      fetchChats();
+    }
+  }, [user]);
 
   const Logout = () => {
     logout();

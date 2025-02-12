@@ -9,6 +9,7 @@ import ChatWindow from "./ChatWindow";
 import { getSender } from "../config/chatlogics";
 
 const MenuBar = ({ children }) => {
+  const [loogedUser, setLoggedUser] = useState();
   const { openCreateGroupChatModal } = useContext(ModalContext);
   const {
     chats,
@@ -23,6 +24,7 @@ const MenuBar = ({ children }) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
+    setLoggedUser(JSON.parse(localStorage.getItem("userInfo")));
     fetchChats();
   }, []);
 
@@ -69,12 +71,15 @@ const MenuBar = ({ children }) => {
           ) : chats.length > 0 ? (
             chats.map((chat) => {
               const chatName = chat.isGroupChat
-                ? chat.chatName || !user 
-                : getSender(user, chat.users);
+                ? chat.chatName
+                : chat.users.length > 0
+                ? getSender(user, chat.users)
+                : "Private Chat";
 
-              console.log("Chat Users:", chat.users);
-              console.log("Logged-in User:", user);
-              console.log("Computed Sender:", getSender(user, chat.users));
+              console.log("Chat:", chat);
+              console.log("Users in chat:", chat.users);
+              console.log("Logged-in user:", user);
+              console.log("Determined chat name:", chatName);
 
               return (
                 <li

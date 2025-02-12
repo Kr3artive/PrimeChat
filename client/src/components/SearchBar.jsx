@@ -6,8 +6,7 @@ import { IoIosCloseCircle } from "react-icons/io";
 import { ChatState } from "../contexts/ChatContext";
 
 const SearchBar = () => {
-  const { setChats } = ChatState();
-  // const {user} = ChatState()
+  const { setChats, setSelectedchat } = ChatState(); 
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -62,24 +61,19 @@ const SearchBar = () => {
 
       const newChat = response.data;
 
-      // Check if the chat already exists in fetchChats
       setChats((prevChats) => {
         const chatExists = prevChats.find((chat) => chat._id === newChat._id);
-
-        if (!chatExists) {
-          return [newChat, ...prevChats]; // Add only if it doesn't exist
-        }
-
-        return prevChats; // If it exists, return the current state
+        return chatExists ? prevChats : [newChat, ...prevChats];
       });
 
-      console.log("Chat Accessed:", newChat);
+      setSelectedchat(newChat); // Set the chat as active
+      setIsModalOpen(false); // Close search modal
+
+      console.log("Chat Opened:", newChat);
     } catch (error) {
       console.error("Error accessing chat:", error);
     }
   };
-
-
 
   return (
     <div className="relative">
@@ -97,9 +91,14 @@ const SearchBar = () => {
         />
         <button
           type="submit"
-          className="bg-green-600 text-white px-4 py-1 rounded-full hover:bg-gray-800 transition"
+          className="bg-green-600 text-white px-4 py-1 rounded-full hover:bg-gray-800 transition flex items-center"
+          disabled={loading}
         >
-          Search
+          {loading ? (
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            "Search"
+          )}
         </button>
       </form>
 
