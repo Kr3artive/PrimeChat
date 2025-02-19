@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { BiCheckCircle, BiXCircle, BiUpload } from "react-icons/bi";
 
 const Signup = () => {
   const [message, setMessage] = useState({ text: "", type: "" });
   const [loading, setLoading] = useState(false);
+  const [fileName, setFileName] = useState("No file chosen");
   const navigate = useNavigate();
 
   const {
@@ -50,7 +52,7 @@ const Signup = () => {
       );
 
       showMessage(
-        `SIGNUP SUCCESSFULL! VERIFY YOUR EMAIL ${data.email}`,
+        `SIGNUP SUCCESSFUL! VERIFY YOUR EMAIL ${data.email}`,
         "success"
       );
     } catch (error) {
@@ -64,15 +66,27 @@ const Signup = () => {
   };
 
   return (
-    <div className="flex items-center justify-center bg-gray-100 p-4">
+    <div className="flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-lg bg-white p-6 rounded-lg shadow-md">
+        {/* Notification Modal */}
         {message.text && (
           <div
-            className={`fixed top-5 right-5 bg-white shadow-lg rounded-lg p-4 w-80 transition-opacity duration-300 ${
-              message.type === "success" ? "text-green-600" : "text-red-600"
+            className={`fixed top-5 right-5 flex items-center gap-3 px-6 py-4 rounded-lg shadow-lg transition-all transform ${
+              message.type === "success"
+                ? "bg-green-600 text-white"
+                : "bg-red-600 text-white"
             }`}
+            style={{
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+            }}
           >
-            {message.text}
+            {message.type === "success" ? (
+              <BiCheckCircle className="h-6 w-6 text-white" />
+            ) : (
+              <BiXCircle className="h-6 w-6 text-red-300" />
+            )}
+            <p className="text-lg font-semibold">{message.text}</p>
           </div>
         )}
 
@@ -143,16 +157,23 @@ const Signup = () => {
             <label className="block text-sm font-medium text-black">
               Profile Image
             </label>
-            <input
-              type="file"
-              {...register("pic", { required: "Profile image is required" })}
-              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
-            />
+            <div className="relative border rounded p-2 cursor-pointer flex items-center gap-3 bg-gray-50">
+              <BiUpload className="w-6 h-6 text-gray-500" />
+              <input
+                type="file"
+                {...register("pic", { required: "Profile image is required" })}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                onChange={(e) =>
+                  setFileName(e.target.files[0]?.name || "No file chosen")
+                }
+              />
+              <span className="text-sm text-gray-700">{fileName}</span>
+            </div>
             {errors.pic && (
               <p className="text-red-500 text-sm">{errors.pic.message}</p>
             )}
           </div>
-          
+
           <button
             type="submit"
             className="w-full bg-green-600 text-white font-medium py-2 rounded-md hover:bg-green-700 focus:ring-4 focus:ring-green-500 focus:outline-none flex items-center justify-center"

@@ -16,8 +16,6 @@ const CreateGroupChatModal = () => {
 
   const { register, handleSubmit } = useForm();
 
-  // Handle Search
-  // Handle Search
   const handleSearch = async (query) => {
     if (!query.trim()) {
       setSearchResult([]);
@@ -28,23 +26,16 @@ const CreateGroupChatModal = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-
       const response = await axios.get(
         `https://primechat-t9vo.onrender.com/user/alluser?search=${query}`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (response.data.length === 0) {
-        setMessage("No users found");
-      } else {
-        setMessage(null);
-      }
-
-      setSearchResult(response.data);
+      const filteredUsers = response.data.filter((u) => u._id !== user._id);
+      setSearchResult(filteredUsers.length ? filteredUsers : []);
+      setMessage(filteredUsers.length ? null : "No users found");
     } catch (error) {
       setMessage("Failed to load search results");
     } finally {
@@ -53,43 +44,44 @@ const CreateGroupChatModal = () => {
     }
   };
 
-  // Add User to Group
-  const addUserToGroup = (user) => {
-    if (selectedUsers.some((u) => u._id === user._id)) {
+  const addUserToGroup = (newUser) => {
+    if (selectedUsers.some((u) => u._id === newUser._id)) {
       setMessage("User already added!");
       setTimeout(() => setMessage(null), 2000);
       return;
     }
-    setSelectedUsers([...selectedUsers, user]);
+    setSelectedUsers([...selectedUsers, newUser]);
   };
 
-  // Remove User from Group
   const removeUser = (userId) => {
     setSelectedUsers(selectedUsers.filter((user) => user._id !== userId));
   };
 
-  // Handle Form Submission
   const onSubmit = async (data) => {
-    if (!data.groupName.trim() || selectedUsers.length < 2) {
-      setMessage("Please provide a group name and at least 2 users");
+    if (!data.groupName.trim() || selectedUsers.length < 1) {
+      setMessage("Please provide a group name and select at least one user");
       setTimeout(() => setMessage(null), 3000);
       return;
     }
 
     try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
+      const token = localStorage.getItem("token");
+
+      // Ensure unique users (including authenticated user)
+      const groupUsers = Array.from(
+        new Set([user._id, ...selectedUsers.map((u) => u._id)])
+      );
 
       const { data: newChat } = await axios.post(
-        "https://primechat-t9vo.onrender.com/chats/group",
+        "http://localhost:9000/chats/creategroup",
         {
           name: data.groupName,
-          users: selectedUsers.map((user) => user._id),
+          users: JSON.stringify(groupUsers),
+          groupAdmin: user._id, // Authenticated user as admin
         },
-        config
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
 
       setChats((prevChats) => [newChat, ...prevChats]);
@@ -114,19 +106,17 @@ const CreateGroupChatModal = () => {
           >
             <IoIosCloseCircle className="text-3xl text-red-600" />
           </button>
-
           <h3 className="text-center border-b border-green-500 text-2xl pb-3">
             Create Group Chat
           </h3>
 
           {message && (
-            <div className="text-center text-sm bg-red-100 text-red-600 p-2 rounded-md my-3">
+            <div className="text-center text-sm bg-red-100 text-gray-600 p-2 rounded-md my-3">
               {message}
             </div>
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Group Name Input */}
             <div className="mt-2">
               <label htmlFor="groupName" className="block font-semibold">
                 Group Name:
@@ -135,11 +125,10 @@ const CreateGroupChatModal = () => {
                 {...register("groupName")}
                 type="text"
                 placeholder="Enter chat name"
-                className="block w-full h-10 outline-none hover:border-green-300 focus:outline-green-400 focus:border-green-300 rounded-xl px-2.5 capitalize"
+                className="block w-full h-10 outline-none border rounded-xl px-2.5 capitalize"
               />
             </div>
 
-            {/* Search Users */}
             <div>
               <label htmlFor="searchUsers" className="block font-semibold">
                 Add Users:
@@ -148,15 +137,14 @@ const CreateGroupChatModal = () => {
                 type="text"
                 placeholder="Search users..."
                 onChange={(e) => handleSearch(e.target.value)}
-                className="block w-full h-10 border outline-none hover:border-green-300 focus:outline-green-400 focus:border-green-300 rounded-xl px-2.5"
+                className="block w-full h-10 border outline-none rounded-xl px-2.5"
               />
             </div>
 
-            {/* Search Results */}
-            <div className="max-h-36 overflow-y-auto border border-gray-300 rounded-md p-2">
+            <div className="max-h-36 overflow-y-auto border p-2">
               {loading ? (
                 <p className="text-center">Loading...</p>
-              ) : searchResult.length > 0 ? (
+              ) : (
                 searchResult.map((user) => (
                   <div
                     key={user._id}
@@ -166,13 +154,14 @@ const CreateGroupChatModal = () => {
                     <span>{user.fullname}</span>
                   </div>
                 ))
-              ) : (
-                <p className="text-center text-black">{message}</p>
               )}
             </div>
 
-            {/* Selected Users */}
             <div className="flex flex-wrap gap-2 mt-3">
+              <div className="flex items-center bg-blue-100 px-2 py-1 rounded-full text-sm">
+                <span>{user.fullname} (Admin)</span>
+              </div>
+
               {selectedUsers.map((user) => (
                 <div
                   key={user._id}
@@ -183,16 +172,15 @@ const CreateGroupChatModal = () => {
                     onClick={() => removeUser(user._id)}
                     className="ml-2 text-red-500 hover:text-red-700"
                   >
-                    <IoIosCloseCircle/>
+                    <IoIosCloseCircle />
                   </button>
                 </div>
               ))}
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-green-600 text-white py-2 mt-4 rounded-md hover:bg-green-700 transition"
+              className="w-full bg-green-600 text-white py-2 mt-4 rounded-md hover:bg-green-700"
             >
               Create Chat
             </button>

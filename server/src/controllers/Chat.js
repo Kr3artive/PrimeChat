@@ -112,6 +112,7 @@ const createGroupChat = async (req, res) => {
       .populate("groupAdmin", "-password");
 
     res.status(200).json(fullGroupChat);
+    console.log(fullGroupChat)
   } catch (error) {
     console.error("ERROR CREATING GROUP CHAT:", error.message);
     res

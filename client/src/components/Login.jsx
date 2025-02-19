@@ -2,6 +2,7 @@ import { useState, useContext } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
+import { BiCheckCircle, BiXCircle } from "react-icons/bi";
 
 const Login = () => {
   const { login } = useContext(AuthContext);
@@ -36,10 +37,10 @@ const Login = () => {
     setLoading(true);
     try {
       await login(data.email, data.password);
-      showModal(`AUTHENTICATED AS ${data.email}`, "success");
+      showModal(`Authenticated as ${data.email}`, "success");
     } catch (error) {
       showModal(
-        error.response?.data?.message || "LOGIN FAILED, PLEASE TRY AGAIN.",
+        error.response?.data?.message || "Login failed, please try again.",
         "error"
       );
     } finally {
@@ -48,7 +49,7 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center bg-gray-100 px-4">
+    <div className="flex items-center justify-center bg-gray-100">
       <div className="bg-white shadow-md rounded-lg w-full max-w-md p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
@@ -110,14 +111,21 @@ const Login = () => {
       </div>
 
       {modal.show && (
-        <div className="fixed top-5 right-5 bg-white shadow-lg rounded-lg p-4 w-80 transition-opacity duration-300">
-          <p
-            className={`text-lg ${
-              modal.type === "success" ? "text-green-700" : "text-red-600"
-            }`}
-          >
-            {modal.text}
-          </p>
+        <div
+          className={`fixed top-5 right-5 z-50 flex items-center gap-3 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg transition-all transform ${
+            modal.show ? "translate-x-0 opacity-100" : "translate-x-5 opacity-0"
+          }`}
+          style={{
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+          }}
+        >
+          {modal.type === "success" ? (
+            <BiCheckCircle className="h-6 w-6 text-white" />
+          ) : (
+            <BiXCircle className="h-6 w-6 text-red-600" />
+          )}
+          <p className="text-lg font-semibold">{modal.text}</p>
         </div>
       )}
     </div>
