@@ -8,7 +8,7 @@ import { ChatState } from "../contexts/ChatContext";
 import ChatWindow from "./ChatWindow";
 import { getSender } from "../config/chatlogics";
 
-const MenuBar = ({ children }) => {
+const MenuBar = () => {
   const [loggedUser, setLoggedUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -28,17 +28,23 @@ const MenuBar = ({ children }) => {
     if (storedUser) {
       setLoggedUser(JSON.parse(storedUser));
     }
-    fetchChats();
+
+    if (typeof fetchChats === "function") {
+      fetchChats();
+    }
   }, [fetchChats]);
 
-  const getChatName = (chat, loggedUser) => {
+  const getChatName = (chat) => {
     if (!chat) return "No Chat Selected";
 
     if (chat.isGroupChat) {
-      return chat.chatName;
-    } else if (loggedUser && chat.users.length > 0) {
-      return getSender(loggedUser, chat.users);
+      return chat.chatName; // Return group chat name
     }
+
+    if (loggedUser && Array.isArray(chat.users)) {
+      return getSender(loggedUser, chat.users); // Return the name of the other user
+    }
+
     return "Unknown User";
   };
 
@@ -82,14 +88,9 @@ const MenuBar = ({ children }) => {
             <p className="text-center text-green-700">Loading chats...</p>
           ) : error ? (
             <p className="text-center text-red-600">{error}</p>
-          ) : chats.length > 0 ? (
+          ) : Array.isArray(chats) && chats.length > 0 ? (
             chats.map((chat) => {
-              const chatName = getChatName(chat, loggedUser);
-
-              console.log("Chat:", chat);
-              console.log("Users in chat:", chat.users);
-              console.log("Logged-in user:", user);
-              console.log("Determined chat name:", chatName);
+              const chatName = getChatName(chat);
 
               return (
                 <li
@@ -121,7 +122,12 @@ const MenuBar = ({ children }) => {
       {/* Chat Messages Area */}
       <div className="bg-white rounded-xl md:w-3/4 w-full p-4">
         {selectedchat ? (
-          <ChatWindow chat={selectedchat} />
+          <div>
+            <h2 className="text-xl font-bold mb-4">
+              Chatting with: {getChatName(selectedchat)}
+            </h2>
+            <ChatWindow chat={selectedchat} />
+          </div>
         ) : (
           <p className="text-center text-gray-600">
             Select a chat to start messaging

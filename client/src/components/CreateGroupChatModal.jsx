@@ -99,7 +99,7 @@ const CreateGroupChatModal = () => {
   return (
     isCreateGroupChatModalOpen && (
       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 p-2">
-        <div className="bg-white p-6 rounded shadow-lg h-[500px] w-[500px] relative">
+        <div className="bg-white p-6 rounded shadow-lg w-[500px] relative">
           <button
             onClick={closeCreateGroupChatModal}
             className="absolute top-5 right-5 shadow-md rounded-full h-10 w-10 flex justify-center items-center bg-gray-50 hover:bg-gray-100"
