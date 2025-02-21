@@ -210,4 +210,4 @@ module.exports = {
   renameGroup,
   addToGroup,
   removeFromGroup,
-};x
+};
