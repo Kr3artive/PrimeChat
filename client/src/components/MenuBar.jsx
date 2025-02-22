@@ -35,18 +35,18 @@ const MenuBar = () => {
   }, [fetchChats]);
 
   const getChatName = (chat) => {
-    if (!chat) return "No Chat Selected";
-
-    if (chat.isGroupChat) {
-      return chat.chatName; // Return group chat name
+    if (!chat || !Array.isArray(chat.users) || chat.users.length < 2) {
+      console.error(
+        "getChatName Error: chat.users is missing or incomplete",
+        chat
+      );
+      return "Unknown User";
+      
     }
 
-    if (loggedUser && Array.isArray(chat.users)) {
-      return getSender(loggedUser, chat.users); // Return the name of the other user
-    }
-
-    return "Unknown User";
+    return chat.isGroupChat ? chat.chatName : getSender(loggedUser, chat.users);
   };
+
 
   return (
     <div className="bg-green-300 flex flex-col md:flex-row gap-5 p-5 min-h-screen relative">
@@ -89,13 +89,20 @@ const MenuBar = () => {
           ) : error ? (
             <p className="text-center text-red-600">{error}</p>
           ) : Array.isArray(chats) && chats.length > 0 ? (
-            chats.map((chat) => {
+                chats.map((chat) => {
+                  
+              console.log("Chat Users:", chat.users);
+              console.log("Chat Object:", chat);
+              console.log("Logged User:", loggedUser);
+
               const chatName = getChatName(chat);
+              const lastMessage =
+                chat.latestMessage?.content || "No messages yet";
 
               return (
                 <li
                   key={chat._id}
-                  title={chat.lastMessage || "No messages yet"}
+                  title={lastMessage}
                   className={`bg-green-200 w-full rounded-lg my-4 h-16 flex justify-between items-end pb-2.5 pt-1.5 px-2 hover:cursor-pointer hover:bg-green-300 transition-colors duration-500 ${
                     selectedchat?._id === chat._id ? "bg-green-400" : ""
                   }`}
@@ -106,10 +113,13 @@ const MenuBar = () => {
                 >
                   <div className="flex flex-col gap-1">
                     <span className="font-semibold">{chatName}</span>
-                    <span className="text-sm">
-                      {chat.lastMessage || "No messages yet"}
+                    <span className="text-sm text-gray-700 truncate w-40">
+                      {chat.lastMessage?.sender?.fullname
+                        ? `${chat.lastMessage.sender.fullname}: ${lastMessage}`
+                        : lastMessage}
                     </span>
                   </div>
+                  
                 </li>
               );
             })

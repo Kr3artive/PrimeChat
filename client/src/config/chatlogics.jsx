@@ -39,9 +39,17 @@ export const isSameUser = (messages, m, i) => {
 };
 
 export const getSender = (loggedUser, users) => {
-  return users[0]._id === loggedUser._id
-    ? users[1].fullname
-    : users[0].fullname;
+  if (!users || users.length < 2 || !loggedUser) {
+    console.error(
+      "getSender Error: Invalid users array or loggedUser missing",
+      { loggedUser, users }
+    );
+    return "Unknown User"; // Fallback name
+  }
+
+  return users[0]?._id === loggedUser?._id
+    ? users[1]?.fullname || "Unknown"
+    : users[0]?.fullname || "Unknown";
 };
 
 export const getSenderFull = (loggedUser, users) => {
