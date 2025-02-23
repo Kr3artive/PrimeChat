@@ -2,13 +2,36 @@ import { useEffect, useState } from "react";
 import { ChatState } from "../contexts/ChatContext";
 import { FaEye, FaSpinner } from "react-icons/fa";
 import axios from "axios";
+import { io } from "socket.io-client";
+import Lottie from "react-lottie";
+import animationData from "../animations/typing.json";
+
+const defaultOptions = {
+  loop: true,
+  autoplay: true,
+  animationData: animationData,
+  rendererSettings: {
+    preserveAspectRatio: "xMidYMid slice",
+  },
+};
+
+const ENDPOINT = "http://localhost:9000";
+const socket = io(ENDPOINT, { transports: ["websocket"] });
 
 const ChatWindow = ({ chat }) => {
-  const { user } = ChatState();
+  const { user, notifications, setNotifications } = ChatState();
   const [messagesByChat, setMessagesByChat] = useState({});
   const [newMessage, setNewMessage] = useState("");
-  const [isSending, setIsSending] = useState(false); // New state for loading
+  const [isSending, setIsSending] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [typing, setTyping] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [lastTypingTime, setLastTypingTime] = useState(null);
+  const [loading, setLoading] = useState()
+  const [messageState, setMessageState] = useState(null);
   const token = localStorage.getItem("token");
 
   const otherUser = chat?.users?.find((u) => u?._id !== user?._id) || {};
@@ -16,20 +39,42 @@ const ChatWindow = ({ chat }) => {
     ? chat?.chatName
     : otherUser?.fullname || "Chat";
 
-  // Fetch messages for the selected chat
+  useEffect(() => {
+    if (!chat?._id) return;
+
+    socket.emit("join chat", chat._id);
+
+    socket.on("new message", (message) => {
+      if (message.chatId === chat._id) {
+        setMessagesByChat((prev) => ({
+          ...prev,
+          [chat._id]: [...(prev[chat._id] || []), message],
+        }));
+      }
+    });
+
+    socket.on("typing", () => setIsTyping(true));
+    socket.on("stop typing", () => setIsTyping(false));
+
+    return () => {
+      socket.off("new message");
+      socket.off("typing");
+      socket.off("stop typing");
+    };
+  }, [chat?._id]);
+
   useEffect(() => {
     const fetchMessages = async () => {
       if (!chat?._id) return;
 
       try {
-        const { data } = await axios.get(
-          `https://primechat-t9vo.onrender.com/message/${chat._id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const { data } = await axios.get(`${ENDPOINT}/message/${chat._id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         setMessagesByChat((prev) => ({
           ...prev,
-          [chat._id]: data, // Store messages under chat ID
+          [chat._id]: data,
         }));
       } catch (err) {
         console.error("Error fetching messages:", err.message);
@@ -38,20 +83,92 @@ const ChatWindow = ({ chat }) => {
 
     fetchMessages();
   }, [chat?._id, token]);
+const handleSearch = async (e) => {
+  const searchValue = e.target.value;
+  setSearchTerm(searchValue);
+  if (!searchValue.trim()) {
+    setFilteredUsers([]);
+    return;
+  }
+  setLoading(true);
+  try {
+    const response = await axios.get(
+      `https://primechat-t9vo.onrender.com/user/alluser?search=${searchValue}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    setFilteredUsers(response.data);
+  } catch (error) {
+    console.error("ERROR FETCHING USERS:", error);
+    setFilteredUsers([]);
+  } finally {
+    setLoading(false);
+  }
+  };
+  
+  const showMessage = (text, type = "success") => {
+    setMessageState({ text, type });
+    setTimeout(() => setMessageState(null), 3000);
+  };
 
-  // Send a new message
+const handleAddUser = async (userId) => {
+  try {
+    await axios.post(
+      `https://primechat-t9vo.onrender.com/chats/${chat._id}/adduser`,
+      { userId },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    showMessage("User added successfully!");
+    setFilteredUsers([]);
+    setShowModal(false)
+  } catch (err) {
+    console.error("Failed to add user:", err);
+  }
+};
+
+const handleLeaveGroup = async () => {
+  try {
+    await axios.post(
+      `https://primechat-t9vo.onrender.com/groups/${chat._id}/leave-group`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    showMessage("You have left the group!");
+    setShowModal(false);
+  } catch (err) {
+    console.error("Failed to leave group:", err);
+  }
+};
+
+const handleRenameGroup = async () => {
+  if (!newGroupName.trim()) return;
+  try {
+    await axios.put(
+      `https://primechat-t9vo.onrender.com/chats/renamegroup`,
+      { chatId: chat._id, chatName: newGroupName }, 
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    showMessage("Group renamed successfully!");
+    setNewGroupName("");
+    setShowModal(false);
+  } catch (err) {
+    console.error("Failed to rename group:", err);
+  }
+};
+
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || isSending) return; // Prevent sending if empty or already sending
+    if (!newMessage.trim() || isSending) return;
 
-    setIsSending(true); // Start loading state
+    setIsSending(true);
 
     try {
       const { data } = await axios.post(
-        "https://primechat-t9vo.onrender.com/message/send",
+        `${ENDPOINT}/message/send`,
         { content: newMessage, chatId: chat._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      socket.emit("send message", data);
 
       setMessagesByChat((prev) => ({
         ...prev,
@@ -59,11 +176,32 @@ const ChatWindow = ({ chat }) => {
       }));
 
       setNewMessage("");
+      socket.emit("stop typing", chat._id);
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {
-      setIsSending(false); // Stop loading state
+      setIsSending(false);
     }
+  };
+
+  const handleTyping = (e) => {
+    setNewMessage(e.target.value);
+
+    if (!typing) {
+      setTyping(true);
+      socket.emit("typing", chat._id);
+    }
+
+    setLastTypingTime(new Date().getTime());
+
+    setTimeout(() => {
+      let currentTime = new Date().getTime();
+      let timeDiff = currentTime - lastTypingTime;
+      if (timeDiff >= 3000 && typing) {
+        socket.emit("stop typing", chat._id);
+        setTyping(false);
+      }
+    }, 3000);
   };
 
   const messages = messagesByChat[chat?._id] || [];
@@ -79,7 +217,6 @@ const ChatWindow = ({ chat }) => {
         />
       </div>
 
-      {/* Messages Container */}
       <div className="bg-gray-100 rounded-lg h-[400px] overflow-y-auto py-2 px-3 flex flex-col">
         {messages.length > 0 ? (
           messages.map((msg) => {
@@ -94,7 +231,7 @@ const ChatWindow = ({ chat }) => {
               >
                 <div
                   className={`max-w-xs md:max-w-md p-3 rounded-lg text-white ${
-                    isMyMessage ? "bg-blue-500" : "bg-gray-300 text-black"
+                    isMyMessage ? "bg-green-600" : "bg-gray-800 text-black"
                   }`}
                 >
                   <span className="block text-sm font-semibold">
@@ -112,24 +249,129 @@ const ChatWindow = ({ chat }) => {
             );
           })
         ) : (
-          <p className="text-center text-gray-500">No messages yet</p>
+          <p className="text-center text-black">No messages yet</p>
+        )}
+        {showModal && (
+          <div className="fixed mt-14 inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+            <div className="bg-white p-5 rounded-lg shadow-lg w-96">
+              {chat?.isGroupChat ? (
+                <>
+                  <h3 className="text-lg font-bold mb-3">Manage Group</h3>
+                  <div>
+                    {messageState && (
+                      <div
+                        className={`p-2 text-white text-center rounded ${
+                          messageState.type === "error"
+                            ? "bg-red-500"
+                            : "bg-green-500"
+                        }`}
+                      >
+                        {messageState.text}
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    className="border p-2 w-full rounded mb-3"
+                    placeholder="Rename group"
+                    value={newGroupName}
+                    onChange={(e) => setNewGroupName(e.target.value)}
+                  />
+                  <button
+                    className="bg-green-600 text-white px-4 py-2 rounded w-full mb-3"
+                    onClick={handleRenameGroup}
+                  >
+                    Rename Group
+                  </button>
+                  <input
+                    type="text"
+                    className="border p-2 w-full rounded mb-3"
+                    placeholder="Search users..."
+                    value={searchTerm}
+                    onChange={handleSearch}
+                  />
+                  <ul>
+                    {filteredUsers.map((u) => (
+                      <li
+                        key={u._id}
+                        className="p-2 border-b flex justify-between"
+                      >
+                        {u.fullname}
+                        <button
+                          className="bg-green-500 text-white px-2 py-1 rounded"
+                          onClick={() => handleAddUser(u._id)}
+                        >
+                          Add
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mb-2 font-semibold">Group Members:</p>
+                  <ul className="mb-3 border rounded p-2 max-h-40 overflow-y-auto">
+                    {chat.users
+                      .filter(
+                        (u, index, self) =>
+                          index === self.findIndex((user) => user._id === u._id)
+                      )
+                      .map((u) => (
+                        <li
+                          key={u._id}
+                          className="p-2 border-b flex justify-between"
+                        >
+                          {u.fullname}
+                        </li>
+                      ))}
+                  </ul>
+                  {/* Leave Group Button */}
+                  <button
+                    className="bg-red-500 text-white px-4 py-2 rounded w-full mb-3"
+                    onClick={handleLeaveGroup}
+                  >
+                    Leave Group
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-lg font-bold mb-3">User Info</h3>
+                  <img>{otherUser.pic}</img>
+                  <p>
+                    <strong>Name:</strong> {otherUser.fullname}
+                  </p>
+                  <p>
+                    <strong>Email:</strong> {otherUser.email}
+                  </p>
+                </>
+              )}
+              <button
+                className="mt-2 w-full bg-black text-white py-2 rounded"
+                onClick={() => setShowModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isTyping && (
+          <div>
+            <Lottie options={defaultOptions} width={50} />
+          </div>
         )}
       </div>
 
-      {/* Message Input */}
-      <form onSubmit={sendMessage} className="mt-3 flex">
+      <form onSubmit={sendMessage} className="mt-10 flex">
         <input
           type="text"
           className="border p-2 flex-1 rounded"
           placeholder="Type a message..."
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          disabled={isSending} // Disable input when sending
+          onChange={handleTyping}
+          disabled={isSending}
         />
         <button
           type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded ml-2 flex items-center justify-center"
-          disabled={isSending} // Disable button when sending
+          className="bg-green-500 text-white px-4 py-2 rounded ml-2 flex items-center justify-center"
+          disabled={isSending}
         >
           {isSending ? (
             <FaSpinner className="animate-spin" size={18} />

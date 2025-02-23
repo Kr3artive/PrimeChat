@@ -5,7 +5,6 @@ const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
 
-const chats = require("./data/data");
 const AuthRoutes = require("./src/routes/Auth");
 const UserRoutes = require("./src/routes/User");
 const ChatRoutes = require("./src/routes/Chat");
@@ -17,7 +16,7 @@ const index = express();
 const server = http.createServer(index);
 const io = new Server(server, {
   cors: {
-    origin: "https://your-frontend-url.com", // Replace with your frontend URL
+    origin: "http://localhost:4000",
     methods: ["GET", "POST"],
   },
 });
@@ -27,9 +26,8 @@ index.use(cors());
 index.use(express.json());
 
 // Connect to MongoDB
-const mongodb = process.env.MongoUrl;
 mongoose
-  .connect(mongodb)
+  .connect(process.env.MongoUrl)
   .then(() => console.log("CONNECTED TO DATABASE"))
   .catch((error) => console.log("CONNECTION ERROR", error));
 
@@ -59,9 +57,16 @@ io.on("connection", (socket) => {
   // Handle sending a message
   socket.on("send message", (message) => {
     console.log("New message:", message);
-
-    // Emit the message to all users in the chat room
     io.to(message.chatId).emit("new message", message);
+  });
+
+  // Handle typing event
+  socket.on("typing", (chatId) => {
+    socket.to(chatId).emit("typing", chatId);
+  });
+
+  socket.on("stop typing", (chatId) => {
+    socket.to(chatId).emit("stop typing", chatId);
   });
 
   // Handle user disconnect

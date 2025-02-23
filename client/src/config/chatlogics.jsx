@@ -44,7 +44,7 @@ export const getSender = (loggedUser, users) => {
       "getSender Error: Invalid users array or loggedUser missing",
       { loggedUser, users }
     );
-    return "Unknown User"; // Fallback name
+    return "Unknown Sender"; // Fallback name
   }
 
   return users[0]?._id === loggedUser?._id

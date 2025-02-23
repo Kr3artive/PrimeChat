@@ -2,33 +2,40 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
-const cloudinary = require("../config/cloudinary");
 const fs = require("fs");
 const User = require("../models/userModel");
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET,
+  secure: true,
+});
 
 // Temporary storage for unverified users
 const tempUsers = new Map();
 
-// Registration (Step 1: Send OTP but do not save user yet)
+// 🚀 Signup Route (Step 1: Send OTP but do not save user yet)
 const signup = async (req, res) => {
   const { fullname, email, password } = req.body;
   const pic = req.file;
   const secret = process.env.JWT_KEY;
 
   try {
-    // Check if a user with the provided email already exists
+    // Check if a user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({ message: "USER ALREADY EXISTS" });
     }
 
-    let imageUrl;
+    let imageUrl = "";
     if (pic) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
+      const result = await cloudinary.uploader.upload(pic.path, {
         folder: "uploads",
       });
       imageUrl = result.secure_url;
-      fs.unlinkSync(req.file.path);
+      fs.unlinkSync(pic.path); // Delete temporary file
     }
 
     // Hash password
@@ -38,14 +45,14 @@ const signup = async (req, res) => {
     const otp = crypto.randomInt(100000, 999999).toString();
     const hashedOtp = await bcrypt.hash(otp, 10);
 
-    // Store user data temporarily
+    // Store user temporarily
     tempUsers.set(email, {
       fullname,
       email,
       password: hashedPassword,
       pic: imageUrl || null,
       otp: hashedOtp,
-      otpExpires: Date.now() + 5 * 60 * 1000, // OTP expires in 5 mins
+      otpExpires: Date.now() + 5 * 60 * 1000, // OTP valid for 5 mins
     });
 
     // Configure email transporter
@@ -72,27 +79,25 @@ const signup = async (req, res) => {
       message: "OTP SENT! CHECK YOUR EMAIL TO VERIFY ACCOUNT",
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: "ERROR DURING REGISTRATION", error: err.message });
+    res.status(500).json({ message: "ERROR DURING REGISTRATION", error: err.message });
   }
 };
 
-// OTP verification (Step 2: Save user after OTP verification)
+// ✅ OTP Verification (Step 2: Save user after OTP verification)
 const verifyOtp = async (req, res) => {
   const { email, otp } = req.body;
 
   try {
-    // Check if user exists in temporary storage
+    // Check if user exists in temp storage
     const tempUser = tempUsers.get(email);
     if (!tempUser) {
       return res.status(404).json({ message: "OTP EXPIRED OR USER NOT FOUND" });
     }
 
-    // Check OTP validity
+    // Validate OTP
     const isOtpValid = await bcrypt.compare(otp, tempUser.otp);
     if (!isOtpValid || tempUser.otpExpires < Date.now()) {
-      tempUsers.delete(email); // Remove expired OTP
+      tempUsers.delete(email);
       return res.status(400).json({ message: "INVALID OR EXPIRED OTP" });
     }
 
@@ -108,12 +113,11 @@ const verifyOtp = async (req, res) => {
     await user.save();
 
     // Generate JWT token
-    const secret = process.env.JWT_KEY;
-    const token = jwt.sign({ user: email, userId: user._id }, secret, {
+    const token = jwt.sign({ user: email, userId: user._id }, process.env.JWT_KEY, {
       expiresIn: "7d",
     });
 
-    // Remove from temporary storage
+    // Remove from temp storage
     tempUsers.delete(email);
 
     res.status(201).json({
@@ -122,16 +126,13 @@ const verifyOtp = async (req, res) => {
       token,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: "ERROR DURING OTP VERIFICATION", error: err.message });
+    res.status(500).json({ message: "ERROR DURING OTP VERIFICATION", error: err.message });
   }
 };
 
-// Login function
+// ✅ Login Function
 const login = async (req, res) => {
   const { email, password } = req.body;
-  const secret = process.env.JWT_KEY;
 
   try {
     // Find user by email
@@ -140,11 +141,9 @@ const login = async (req, res) => {
       return res.status(404).json({ message: "USER NOT FOUND" });
     }
 
-    // Check if the user is verified
+    // Check if user is verified
     if (!user.isVerified) {
-      return res
-        .status(403)
-        .json({ message: "USER NOT VERIFIED. PLEASE VERIFY ACCOUNT" });
+      return res.status(403).json({ message: "USER NOT VERIFIED. PLEASE VERIFY ACCOUNT" });
     }
 
     // Validate password
@@ -153,8 +152,8 @@ const login = async (req, res) => {
       return res.status(401).json({ message: "INVALID CREDENTIALS" });
     }
 
-    // Generate a JWT token
-    const token = jwt.sign({ user: email, userId: user._id }, secret, {
+    // Generate JWT token
+    const token = jwt.sign({ user: email, userId: user._id }, process.env.JWT_KEY, {
       expiresIn: "7d",
     });
 

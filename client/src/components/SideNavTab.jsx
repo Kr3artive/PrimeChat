@@ -2,19 +2,19 @@ import { useState } from "react";
 import { IoIosNotifications } from "react-icons/io";
 import { ChatState } from "../contexts/ChatContext";
 
-const UserDetails = ({ onClose }) => {
+const UserDetails = ({ user, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-2">
       <div className="bg-white p-6 rounded-lg shadow-lg w-80">
-        <h2 className="text-lg font-semibold mb-4">User Profile</h2>
+        <h2 className="text-lg font-semibold mb-4">My Profile</h2>
         <div className="flex flex-col items-center">
           <img
-            src="https://tse2.mm.bing.net/th?id=OIP.O8vv9O4Ku4HvFQyep-NXMAHaLG&pid=Api"
+            src={user?.profilePic || "https://via.placeholder.com/150"}
             alt="User"
             className="rounded-full h-16 w-16 object-cover mb-4"
           />
-          <p className="text-black text-base">John Doe</p>
-          <p className="text-black text-sm">johndoe@example.com</p>
+          <p className="text-black text-base">{user?.fullname || "No Name"}</p>
+          <p className="text-black text-sm">{user?.email || "No Email"}</p>
         </div>
         <button
           className="mt-4 bg-red-500 text-white px-4 py-2 rounded-md w-full hover:bg-red-600 text-sm"
@@ -30,7 +30,7 @@ const UserDetails = ({ onClose }) => {
 const SideTab = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const { Logout } = ChatState();
+  const { user, Logout } = ChatState(); // Fetch logged-in user from ChatContext
 
   return (
     <div className="relative text-lg flex justify-between items-center p-2 gap-3">
@@ -41,7 +41,7 @@ const SideTab = () => {
           onClick={() => setIsOpen(!isOpen)}
         >
           <img
-            src="https://tse2.mm.bing.net/th?id=OIP.O8vv9O4Ku4HvFQyep-NXMAHaLG&pid=Api"
+            src={user?.profilePic || "https://via.placeholder.com/150"}
             alt="Profile"
             className="rounded-full h-8 w-8 object-cover"
           />
@@ -72,7 +72,9 @@ const SideTab = () => {
       </div>
 
       {/* User Details Modal */}
-      {showProfile && <UserDetails onClose={() => setShowProfile(false)} />}
+      {showProfile && (
+        <UserDetails user={user} onClose={() => setShowProfile(false)} />
+      )}
     </div>
   );
 };
