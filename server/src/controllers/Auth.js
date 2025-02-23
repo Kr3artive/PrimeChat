@@ -16,14 +16,13 @@ cloudinary.config({
 // Temporary storage for unverified users
 const tempUsers = new Map();
 
-// 🚀 Signup Route (Step 1: Send OTP but do not save user yet)
 const signup = async (req, res) => {
   const { fullname, email, password } = req.body;
-  const pic = req.file;
+  const pic = req.file; // Check if file is present
   const secret = process.env.JWT_KEY;
 
   try {
-    // Check if a user already exists
+    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({ message: "USER ALREADY EXISTS" });
@@ -31,11 +30,16 @@ const signup = async (req, res) => {
 
     let imageUrl = "";
     if (pic) {
-      const result = await cloudinary.uploader.upload(pic.path, {
-        folder: "uploads",
+      // Convert buffer to base64
+      const b64 = Buffer.from(pic.buffer).toString("base64");
+      const dataURI = `data:${pic.mimetype};base64,${b64}`;
+
+      // Upload to Cloudinary
+      const result = await cloudinary.uploader.upload(dataURI, {
+        folder: "chats/pics",
       });
+
       imageUrl = result.secure_url;
-      fs.unlinkSync(pic.path); // Delete temporary file
     }
 
     // Hash password
@@ -50,7 +54,7 @@ const signup = async (req, res) => {
       fullname,
       email,
       password: hashedPassword,
-      pic: imageUrl || null,
+      pic: imageUrl,
       otp: hashedOtp,
       otpExpires: Date.now() + 5 * 60 * 1000, // OTP valid for 5 mins
     });
@@ -79,11 +83,14 @@ const signup = async (req, res) => {
       message: "OTP SENT! CHECK YOUR EMAIL TO VERIFY ACCOUNT",
     });
   } catch (err) {
-    res.status(500).json({ message: "ERROR DURING REGISTRATION", error: err.message });
+    console.error("Signup error:", err);
+    res
+      .status(500)
+      .json({ message: "ERROR DURING REGISTRATION", error: err.message });
   }
 };
 
-// ✅ OTP Verification (Step 2: Save user after OTP verification)
+
 const verifyOtp = async (req, res) => {
   const { email, otp } = req.body;
 

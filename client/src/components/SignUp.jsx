@@ -22,7 +22,6 @@ const Signup = () => {
     setTimeout(() => {
       setMessage({ text: "", type: "" });
 
-      // Redirect only if it's a success message
       if (type === "success") {
         navigate("/verifyotp", { state: { email: text.split(" ")[2] } });
       }
@@ -37,25 +36,25 @@ const Signup = () => {
 
     setLoading(true);
     const formData = new FormData();
-    Object.keys(data).forEach((key) => {
-      if (key !== "pic") formData.append(key, data[key]);
-      else formData.append("pic", data.pic[0]);
-    });
+    formData.append("fullname", data.fullname);
+    formData.append("email", data.email);
+    formData.append("password", data.password);
+
+    if (data.pic && data.pic.length > 0) {
+      formData.append("pic", data.pic[0]);
+    }
 
     try {
-      await axios.post(
-        "https://primechat-t9vo.onrender.com/auth/signup",
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
+      await axios.post("http://localhost:9000/auth/signup", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       showMessage(
         `SIGNUP SUCCESSFUL! VERIFY YOUR EMAIL ${data.email}`,
         "success"
       );
     } catch (error) {
+      console.error("Signup error:", error);
       showMessage(
         error.response?.data?.message || "SIGNUP FAILED, PLEASE TRY AGAIN.",
         "error"
@@ -68,7 +67,6 @@ const Signup = () => {
   return (
     <div className="flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-lg bg-white p-6 rounded-lg shadow-md">
-        {/* Notification Modal */}
         {message.text && (
           <div
             className={`fixed top-5 right-5 flex items-center gap-3 px-6 py-4 rounded-lg shadow-lg transition-all transform ${
@@ -98,12 +96,12 @@ const Signup = () => {
               </label>
               <input
                 type="text"
-                {...register("fullName", { required: "Full name is required" })}
+                {...register("fullname", { required: "Full name is required" })}
                 className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
               />
-              {errors.fullName && (
+              {errors.fullname && (
                 <p className="text-red-500 text-sm">
-                  {errors.fullName.message}
+                  {errors.fullname.message}
                 </p>
               )}
             </div>
@@ -161,7 +159,7 @@ const Signup = () => {
               <BiUpload className="w-6 h-6 text-gray-500" />
               <input
                 type="file"
-                {...register("pic", { required: "Profile image is required" })}
+                {...register("pic")}
                 className="absolute inset-0 opacity-0 cursor-pointer"
                 onChange={(e) =>
                   setFileName(e.target.files[0]?.name || "No file chosen")
@@ -169,9 +167,6 @@ const Signup = () => {
               />
               <span className="text-sm text-gray-700">{fileName}</span>
             </div>
-            {errors.pic && (
-              <p className="text-red-500 text-sm">{errors.pic.message}</p>
-            )}
           </div>
 
           <button
