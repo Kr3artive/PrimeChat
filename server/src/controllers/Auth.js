@@ -2,23 +2,28 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
-const fs = require("fs");
 const User = require("../models/userModel");
 const cloudinary = require("cloudinary").v2;
 
+console.log("CLOUDINARY_CLOUD_NAME:", process.env.CLOUDINARY_CLOUD_NAME);
+console.log("CLOUDINARY_API_KEY:", process.env.CLOUDINARY_API_KEY);
+console.log("EMAIL_USER:", process.env.EMAIL_USER);
+console.log("JWT_KEY:", process.env.JWT_KEY);
+
 cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUD_API_KEY,
-  api_secret: process.env.CLOUD_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
   secure: true,
 });
+
 
 // Temporary storage for unverified users
 const tempUsers = new Map();
 
 const signup = async (req, res) => {
   const { fullname, email, password } = req.body;
-  const pic = req.file; // Check if file is present
+  const pic = req.file;
   const secret = process.env.JWT_KEY;
 
   try {
@@ -28,18 +33,28 @@ const signup = async (req, res) => {
       return res.status(409).json({ message: "USER ALREADY EXISTS" });
     }
 
-    let imageUrl = "";
-    if (pic) {
-      // Convert buffer to base64
-      const b64 = Buffer.from(pic.buffer).toString("base64");
-      const dataURI = `data:${pic.mimetype};base64,${b64}`;
+    cloudinary.api
+      .ping()
+      .then((result) =>
+        console.log("Cloudinary configuration is valid:", result)
+      )
+      .catch((error) =>
+        console.error("Cloudinary configuration error:", error)
+    );
 
-      // Upload to Cloudinary
+    let profilepicUrl = "";
+
+    if (req.file) {
+      const profilepic = req.file;
+      console.log("Received file:", req.file);
+      const b64 = Buffer.from(profilepic.buffer).toString("base64")
+      const dataURI = `data:${profilepic.mimetype};base64,${b64}`;
+      const timestamp = Math.round(new Date().getTime() / 1000);
       const result = await cloudinary.uploader.upload(dataURI, {
         folder: "chats/pics",
+        timestamp: timestamp,
       });
-
-      imageUrl = result.secure_url;
+      profilepicUrl = result.secure_url;
     }
 
     // Hash password
@@ -54,7 +69,7 @@ const signup = async (req, res) => {
       fullname,
       email,
       password: hashedPassword,
-      pic: imageUrl,
+      pic: profilepicUrl,
       otp: hashedOtp,
       otpExpires: Date.now() + 5 * 60 * 1000, // OTP valid for 5 mins
     });

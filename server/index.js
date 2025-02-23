@@ -1,5 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv");
+dotenv.config();
 const mongoose = require("mongoose");
 const cors = require("cors");
 const http = require("http");
@@ -10,7 +11,6 @@ const UserRoutes = require("./src/routes/User");
 const ChatRoutes = require("./src/routes/Chat");
 const MessageRoutes = require("./src/routes/Message");
 
-dotenv.config();
 
 const index = express();
 const server = http.createServer(index);
@@ -27,7 +27,7 @@ index.use(express.json());
 
 // Connect to MongoDB
 mongoose
-  .connect(process.env.MongoUrl)
+  .connect(process.env.MongoUrl, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("CONNECTED TO DATABASE"))
   .catch((error) => console.log("CONNECTION ERROR", error));
 
@@ -79,7 +79,7 @@ io.on("connection", (socket) => {
 index.set("io", io);
 
 // Start server with Socket.io
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 server.listen(PORT, () => {
   console.log(`SERVER IS ACTIVE AT http://localhost:${PORT}`);
 });

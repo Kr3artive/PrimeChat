@@ -41,8 +41,14 @@ const Signup = () => {
     formData.append("password", data.password);
 
     if (data.pic && data.pic.length > 0) {
-      formData.append("pic", data.pic[0]);
+      formData.append("profilepic", data.pic[0]);
     }
+
+    // Debugging: Log FormData contents
+    for (let pair of formData.entries()) {
+      console.log(pair[0], pair[1]);
+    }
+
 
     try {
       await axios.post("http://localhost:9000/auth/signup", formData, {
