@@ -17,7 +17,7 @@ const index = express();
 const server = http.createServer(index);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:4000",
+    origin: "https://prime-chat-ashy.vercel.app",
     methods: ["GET", "POST"],
   },
 });
