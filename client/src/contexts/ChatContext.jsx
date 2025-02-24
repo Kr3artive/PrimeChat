@@ -5,7 +5,7 @@ import axios from "axios";
 import { io } from "socket.io-client";
 
 const ChatContext = createContext();
-const ENDPOINT = "http://localhost:9000"; // Ensure this matches your backend
+const ENDPOINT = "https://primechat-t9vo.onrender.com"; 
 const socket = io(ENDPOINT, { transports: ["websocket"] });
 
 const ChatProvider = ({ children }) => {
