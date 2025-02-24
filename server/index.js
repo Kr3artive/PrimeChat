@@ -2,6 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 dotenv.config();
 const mongoose = require("mongoose");
+const morgan = require("morgan");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -23,6 +24,7 @@ const io = new Server(server, {
 
 // Middleware
 index.use(cors());
+index.use(morgan("dev"));
 index.use(express.json());
 
 // Connect to MongoDB

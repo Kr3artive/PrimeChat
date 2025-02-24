@@ -110,22 +110,31 @@ const verifyOtp = async (req, res) => {
   const { email, otp } = req.body;
 
   try {
-    // Check if user exists in temp storage
-    const tempUser = tempUsers.get(email);
-    if (!tempUser) {
-      return res.status(404).json({ message: "OTP EXPIRED OR USER NOT FOUND" });
-    }
+    const normalizedEmail = email.toLowerCase();
 
-    // Validate OTP
-    const isOtpValid = await bcrypt.compare(otp, tempUser.otp);
-    if (!isOtpValid || tempUser.otpExpires < Date.now()) {
-      tempUsers.delete(email);
+    console.log("Incoming Email:", normalizedEmail);
+    console.log("Incoming OTP:", otp);
+
+    const tempUser = tempUsers.get(normalizedEmail); // FIXED: Use .get() for Map
+    console.log("Stored Temp User:", tempUser); // Debug
+
+    if (!tempUser) {
       return res.status(400).json({ message: "INVALID OR EXPIRED OTP" });
     }
 
-    // Save verified user to database
+    // Compare the stored hashed OTP with the incoming OTP
+    const isOtpValid = await bcrypt.compare(otp, tempUser.otp);
+    if (!isOtpValid) {
+      return res.status(400).json({ message: "INVALID OTP" });
+    }
+
+    if (Date.now() > tempUser.otpExpires) {
+      return res.status(400).json({ message: "OTP HAS EXPIRED" });
+    }
+
+    // Save user to the database
     const user = new User({
-      fullname: tempUser.fullname,
+      fullname: tempUser.fullname, 
       email: tempUser.email,
       password: tempUser.password,
       pic: tempUser.pic,
@@ -134,25 +143,21 @@ const verifyOtp = async (req, res) => {
 
     await user.save();
 
-    // Generate JWT token
-    const token = jwt.sign({ user: email, userId: user._id }, process.env.JWT_KEY, {
-      expiresIn: "7d",
-    });
+    console.log("User Saved to Database:", user); // Debug
 
-    // Remove from temp storage
-    tempUsers.delete(email);
+    tempUsers.delete(normalizedEmail); // FIXED: Use .delete() for Map
 
-    res.status(201).json({
-      message: "ACCOUNT VERIFIED AND CREATED SUCCESSFULLY",
-      user,
-      token,
+    res.status(200).json({ message: "ACCOUNT VERIFIED SUCCESSFULLY", user });
+  } catch (error) {
+    console.error("Error during OTP verification:", error.message);
+    res.status(500).json({
+      message: "ERROR DURING OTP VERIFICATION",
+      error: error.message,
     });
-  } catch (err) {
-    res.status(500).json({ message: "ERROR DURING OTP VERIFICATION", error: err.message });
   }
 };
 
-// ✅ Login Function
+// Login Function
 const login = async (req, res) => {
   const { email, password } = req.body;
 

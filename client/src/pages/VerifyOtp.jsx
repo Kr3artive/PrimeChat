@@ -19,10 +19,12 @@ const VerifyOtp = () => {
   const handleVerifyOtp = async (data) => {
     try {
       // Make the API request to verify OTP
-      const response = await axios.post("http://localhost:9000/auth/verify", {
+      const response = await axios.post("http://localhost:9000/auth/verifyotp", {
         email: email,
         otp: data.otp,
       });
+      console.log("tedu3bedyudb3d", data);
+      
 
       if (response.data.status === "success") {
         setMessage({ text: "OTP verified successfully!", type: "success" });

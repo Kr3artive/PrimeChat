@@ -16,17 +16,17 @@ const Signup = () => {
     formState: { errors },
   } = useForm();
 
-  const showMessage = (text, type) => {
-    setMessage({ text, type });
+ const showMessage = (text, type, email = null) => {
+   setMessage({ text, type });
 
-    setTimeout(() => {
-      setMessage({ text: "", type: "" });
+   setTimeout(() => {
+     setMessage({ text: "", type: "" });
 
-      if (type === "success") {
-        navigate("/verifyotp", { state: { email: text.split(" ")[2] } });
-      }
-    }, 3000);
-  };
+     if (type === "success" && email) {
+       navigate("/verifyotp", { state: { email } });
+     }
+   }, 3000);
+ };
 
   const onSubmit = async (data) => {
     if (data.password !== data.confirmPassword) {
@@ -57,8 +57,10 @@ const Signup = () => {
 
       showMessage(
         `SIGNUP SUCCESSFUL! VERIFY YOUR EMAIL ${data.email}`,
-        "success"
+        "success",
+        data.email
       );
+
     } catch (error) {
       console.error("Signup error:", error);
       showMessage(
