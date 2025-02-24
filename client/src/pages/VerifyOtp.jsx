@@ -23,7 +23,7 @@ const VerifyOtp = () => {
         email: email,
         otp: data.otp,
       });
-      console.log("tedu3bedyudb3d", data);
+      console.log(data);
       
 
       if (response.data.status === "success") {
