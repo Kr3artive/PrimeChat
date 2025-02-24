@@ -14,7 +14,7 @@ PrimeChat is a real-time chat application built using the MERN stack (MongoDB, E
 - **Backend**: Node.js, Express.js, MongoDB
 - **Frontend**: React.js
 - **Authentication**: JWT-based authentication
-- **Realtime**: WebSockets for chat messages
+- **Realtime**: socket.io for chat messages
 
 ## Installation
 
@@ -41,10 +41,6 @@ npm install
   cd client
   npm run dev
   ```
-
-## API Endpoints
-Still working on the routes
-
 
 ## License
 
