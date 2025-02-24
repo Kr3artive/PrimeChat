@@ -9,7 +9,7 @@ const UserDetails = ({ user, onClose }) => {
         <h2 className="text-lg font-semibold mb-4">My Profile</h2>
         <div className="flex flex-col items-center">
           <img
-            src={user?.profilePic || "https://via.placeholder.com/150"}
+            src={user?.pic || "https://via.placeholder.com/150"}
             alt="User"
             className="rounded-full h-16 w-16 object-cover mb-4"
           />
@@ -30,7 +30,9 @@ const UserDetails = ({ user, onClose }) => {
 const SideTab = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const { user, Logout } = ChatState(); // Fetch logged-in user from ChatContext
+  const { user, Logout } = ChatState() || {}; // Ensure safe destructuring
+
+  if (!user || !user.isVerified) return null; // Prevents rendering if user is not available or unverified
 
   return (
     <div className="relative text-lg flex justify-between items-center p-2 gap-3">
@@ -41,7 +43,7 @@ const SideTab = () => {
           onClick={() => setIsOpen(!isOpen)}
         >
           <img
-            src={user?.profilePic || "https://via.placeholder.com/150"}
+            src={user?.pic}
             alt="Profile"
             className="rounded-full h-8 w-8 object-cover"
           />
@@ -61,7 +63,10 @@ const SideTab = () => {
                 Profile
               </li>
               <li
-                onClick={Logout}
+                onClick={() => {
+                  setIsOpen(false);
+                  Logout();
+                }}
                 className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
               >
                 Logout

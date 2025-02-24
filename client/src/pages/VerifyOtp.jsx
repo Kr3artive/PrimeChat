@@ -17,33 +17,55 @@ const VerifyOtp = () => {
   const email = location.state?.email;
 
   const handleVerifyOtp = async (data) => {
-    setLoading(true); 
+    setLoading(true);
+
+    if (!email) {
+      setMessage({
+        text: "Email is missing. Please try again.",
+        type: "error",
+      });
+      setLoading(false);
+      return;
+    }
+
+    console.log("Email:", email);
+    console.log("OTP:", data.otp);
+
     try {
       const response = await axios.post(
         "https://primechat-t9vo.onrender.com/auth/verifyotp",
-        {
-          email: email,
-          otp: data.otp,
-        }
+        { email, otp: data.otp },
+        { headers: { "Content-Type": "application/json" } }
       );
-      console.log(data);
 
-      if (response.data.status === "success") {
+      console.log("Response Data:", response.data);
+
+      if (response.data?.message === "ACCOUNT VERIFIED SUCCESSFULLY") {
         setMessage({ text: "OTP verified successfully!", type: "success" });
-        setTimeout(() => navigate("/"), 2000);
-      } else if (response.data.status === "already_authenticated") {
+
+        console.log(
+          "%cOTP Verified! Redirecting to home...",
+          "color: green; font-weight: bold;"
+        );
+
+        setTimeout(() => {
+          navigate("/", { replace: true });
+        }, 3000);
+      } else {
         setMessage({
-          text: "Your account is already verified. Please log in.",
-          type: "info",
+          text: response.data?.message || "Invalid response from server.",
+          type: "error",
         });
       }
     } catch (error) {
+      console.error("Error:", error.response?.data);
+
       setMessage({
         text: error.response?.data?.message || "Invalid OTP. Please try again.",
         type: "error",
       });
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
       setTimeout(() => setMessage({ text: "", type: "" }), 5000);
     }
   };
@@ -57,7 +79,7 @@ const VerifyOtp = () => {
               message.type === "success"
                 ? "bg-green-500"
                 : message.type === "info"
-                ? "bg-green-500"
+                ? "bg-blue-500"
                 : "bg-red-500"
             }`}
           >
@@ -103,7 +125,7 @@ const VerifyOtp = () => {
 
           <button
             type="submit"
-            className="w-full py-3 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full py-3 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex justify-center items-center"
             disabled={loading}
           >
             {loading ? (

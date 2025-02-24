@@ -64,9 +64,9 @@ const ChatWindow = ({ chat }) => {
   }, [chat?._id]);
 
   useEffect(() => {
-    const fetchMessages = async () => {
-      if (!chat?._id) return;
+    if (!chat?._id) return;
 
+    const fetchMessages = async () => {
       try {
         const { data } = await axios.get(`${ENDPOINT}/message/${chat._id}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -81,8 +81,13 @@ const ChatWindow = ({ chat }) => {
       }
     };
 
-    fetchMessages();
+    fetchMessages(); // Initial fetch
+
+    const interval = setInterval(fetchMessages, 10000); // Fetch every 10 seconds
+
+    return () => clearInterval(interval);
   }, [chat?._id, token]);
+
 const handleSearch = async (e) => {
   const searchValue = e.target.value;
   setSearchTerm(searchValue);
@@ -333,7 +338,13 @@ const handleRenameGroup = async () => {
               ) : (
                 <>
                   <h3 className="text-lg font-bold mb-3">User Info</h3>
-                  <img>{otherUser.pic}</img>
+                  <div className="flex justify-center">
+                    <img
+                      src={user?.pic}
+                      alt="Profile"
+                      className="rounded-full h-36 object-cover"
+                    />
+                  </div>
                   <p>
                     <strong>Name:</strong> {otherUser.fullname}
                   </p>
