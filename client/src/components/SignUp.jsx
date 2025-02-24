@@ -164,7 +164,7 @@ const Signup = () => {
               Profile Image
             </label>
             <div className="relative border rounded p-2 cursor-pointer flex items-center gap-3 bg-gray-50">
-              <BiUpload className="w-6 h-6 text-gray-500" />
+              <BiUpload className="w-6 h-6 text-black" />
               <input
                 type="file"
                 {...register("pic")}
@@ -173,7 +173,7 @@ const Signup = () => {
                   setFileName(e.target.files[0]?.name || "No file chosen")
                 }
               />
-              <span className="text-sm text-gray-700">{fileName}</span>
+              <span className="text-sm text-black">{fileName}</span>
             </div>
           </div>
 

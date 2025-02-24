@@ -15,7 +15,7 @@ const defaultOptions = {
   },
 };
 
-const ENDPOINT = "http://localhost:9000";
+const ENDPOINT = "https://primechat-t9vo.onrender.com";
 const socket = io(ENDPOINT, { transports: ["websocket"] });
 
 const ChatWindow = ({ chat }) => {

@@ -3,9 +3,9 @@ import { useForm } from "react-hook-form";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 
-
 const VerifyOtp = () => {
-  const [message, setMessage] = useState({ text: "", type: "" }); // Message state
+  const [message, setMessage] = useState({ text: "", type: "" });
+  const [loading, setLoading] = useState(false);
   const {
     register,
     handleSubmit,
@@ -17,31 +17,33 @@ const VerifyOtp = () => {
   const email = location.state?.email;
 
   const handleVerifyOtp = async (data) => {
+    setLoading(true); 
     try {
-      // Make the API request to verify OTP
-      const response = await axios.post("http://localhost:9000/auth/verifyotp", {
-        email: email,
-        otp: data.otp,
-      });
+      const response = await axios.post(
+        "https://primechat-t9vo.onrender.com/auth/verifyotp",
+        {
+          email: email,
+          otp: data.otp,
+        }
+      );
       console.log(data);
-      
 
       if (response.data.status === "success") {
         setMessage({ text: "OTP verified successfully!", type: "success" });
+        setTimeout(() => navigate("/"), 2000);
       } else if (response.data.status === "already_authenticated") {
         setMessage({
           text: "Your account is already verified. Please log in.",
           type: "info",
         });
       }
-      navigate("/")
     } catch (error) {
       setMessage({
         text: error.response?.data?.message || "Invalid OTP. Please try again.",
         type: "error",
       });
     } finally {
-      // Clear the message after 5 seconds
+      setLoading(false); // Stop loading
       setTimeout(() => setMessage({ text: "", type: "" }), 5000);
     }
   };
@@ -49,14 +51,13 @@ const VerifyOtp = () => {
   return (
     <div className="p-2 flex justify-center items-center min-h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        {/* Message Popup */}
         {message.text && (
           <div
             className={`p-3 rounded-md mb-4 text-center text-white ${
               message.type === "success"
                 ? "bg-green-500"
                 : message.type === "info"
-                ? "bg-blue-500"
+                ? "bg-green-500"
                 : "bg-red-500"
             }`}
           >
@@ -89,7 +90,7 @@ const VerifyOtp = () => {
               {...register("otp", {
                 required: "OTP is required",
                 pattern: {
-                  value: /^[0-9]{6}$/, // Assuming a 6-digit OTP
+                  value: /^[0-9]{6}$/,
                   message: "OTP must be a 6-digit number",
                 },
               })}
@@ -103,8 +104,13 @@ const VerifyOtp = () => {
           <button
             type="submit"
             className="w-full py-3 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+            disabled={loading}
           >
-            Verify
+            {loading ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              "Verify OTP"
+            )}
           </button>
         </form>
       </div>
