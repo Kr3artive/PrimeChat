@@ -51,9 +51,13 @@ const Signup = () => {
 
 
     try {
-      await axios.post("http://localhost:9000/auth/signup", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await axios.post(
+        "https://primechat-t9vo.onrender.com/auth/signup",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
 
       showMessage(
         `SIGNUP SUCCESSFUL! VERIFY YOUR EMAIL ${data.email}`,
