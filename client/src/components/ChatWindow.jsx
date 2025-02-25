@@ -68,9 +68,12 @@ const ChatWindow = ({ chat }) => {
 
     const fetchMessages = async () => {
       try {
-        const { data } = await axios.get(`${ENDPOINT}/message/${chat._id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const { data } = await axios.get(
+          `https://primechat-t9vo.onrender.com/message/${chat._id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
         setMessagesByChat((prev) => ({
           ...prev,
@@ -81,12 +84,13 @@ const ChatWindow = ({ chat }) => {
       }
     };
 
-    fetchMessages(); // Initial fetch
+    fetchMessages();
 
-    const interval = setInterval(fetchMessages, 10000); // Fetch every 10 seconds
+    const interval = setInterval(fetchMessages, 5000); // Fetch every 5 seconds
 
     return () => clearInterval(interval);
   }, [chat?._id, token]);
+
 
 const handleSearch = async (e) => {
   const searchValue = e.target.value;
@@ -212,9 +216,9 @@ const handleRenameGroup = async () => {
   const messages = messagesByChat[chat?._id] || [];
 
   return (
-    <div>
+    <div className="flex flex-col h-screen p-4 bg-gray-100">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xl font-bold">{chatName}</h2>
+        <h2 className="text-lg md:text-xl font-bold">{chatName}</h2>
         <FaEye
           className="cursor-pointer text-gray-600 hover:text-gray-800"
           size={20}
@@ -222,7 +226,7 @@ const handleRenameGroup = async () => {
         />
       </div>
 
-      <div className="bg-gray-100 rounded-lg h-[400px] overflow-y-auto py-2 px-3 flex flex-col">
+      <div className="flex-1 bg-white rounded-lg overflow-y-auto p-3 h-[400px] md:h-[500px] lg:h-[600px]">
         {messages.length > 0 ? (
           messages.map((msg) => {
             const isMyMessage = msg?.sender?._id === user?._id;
@@ -235,15 +239,17 @@ const handleRenameGroup = async () => {
                 } my-1`}
               >
                 <div
-                  className={`max-w-xs md:max-w-md p-3 rounded-lg text-white ${
+                  className={`max-w-[90%] md:max-w-[70%] p-3 rounded-lg text-white ${
                     isMyMessage ? "bg-green-600" : "bg-gray-800 text-black"
                   }`}
                 >
-                  <span className="block text-sm font-semibold">
+                  <span className="block text-xs md:text-sm lg:text-md font-semibold">
                     {isMyMessage ? "You" : msg?.sender?.fullname}
                   </span>
-                  <p className="text-sm">{msg?.content}</p>
-                  <span className="block text-xs text-gray-200 mt-1 text-right">
+                  <p className="text-xs md:text-sm lg:text-md">
+                    {msg?.content}
+                  </p>
+                  <span className="block text-[10px] md:text-xs lg:text-sm text-gray-200 mt-1 text-right">
                     {new Date(msg?.createdAt).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
@@ -256,6 +262,7 @@ const handleRenameGroup = async () => {
         ) : (
           <p className="text-center text-black">No messages yet</p>
         )}
+
         {showModal && (
           <div className="fixed mt-14 inset-0 bg-black bg-opacity-50 flex justify-center items-center">
             <div className="bg-white p-5 rounded-lg shadow-lg w-96">
@@ -340,8 +347,8 @@ const handleRenameGroup = async () => {
                   <h3 className="text-lg font-bold mb-3">User Info</h3>
                   <div className="flex justify-center">
                     <img
-                      src={user?.pic}
-                      alt="Profile"
+                      src={otherUser?.pic}
+                      alt="ProfilePic"
                       className="rounded-full h-36 object-cover"
                     />
                   </div>
@@ -370,10 +377,10 @@ const handleRenameGroup = async () => {
         )}
       </div>
 
-      <form onSubmit={sendMessage} className="mt-10 flex">
+      <form onSubmit={sendMessage} className="mt-4 flex items-center space-x-2">
         <input
           type="text"
-          className="border p-2 flex-1 rounded"
+          className="flex-1 border p-2 rounded w-full text-sm md:text-base"
           placeholder="Type a message..."
           value={newMessage}
           onChange={handleTyping}
@@ -381,7 +388,7 @@ const handleRenameGroup = async () => {
         />
         <button
           type="submit"
-          className="bg-green-500 text-white px-4 py-2 rounded ml-2 flex items-center justify-center"
+          className="bg-green-500 text-white px-4 py-2 rounded flex items-center justify-center w-16 md:w-24"
           disabled={isSending}
         >
           {isSending ? (

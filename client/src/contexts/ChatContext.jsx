@@ -81,9 +81,12 @@ const ChatProvider = ({ children }) => {
   const fetchChats = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${ENDPOINT}/chats/getchat`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(
+        "https://primechat-t9vo.onrender.com/chats/getchat",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setChats(response.data);
     } catch (err) {
       console.error("Error fetching chats:", err);

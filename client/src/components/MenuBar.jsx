@@ -41,12 +41,10 @@ const MenuBar = () => {
         chat
       );
       return "Unknown User";
-      
     }
 
     return chat.isGroupChat ? chat.chatName : getSender(loggedUser, chat.users);
   };
-
 
   return (
     <div className="bg-green-300 flex flex-col md:flex-row gap-5 p-5 min-h-screen relative">
@@ -72,10 +70,16 @@ const MenuBar = () => {
           <IoIosCloseCircle size={30} />
         </button>
 
-        <div className="flex gap-2 justify-between mx-4 mt-14">
-          <h3 className="text-2xl">My Chats</h3>
+        {/* Header with Title and New Button */}
+        <div className="flex flex-wrap items-center justify-center gap-4 mx-4 mt-4">
+          <h3 className="text-xl sm:text-2xl md:text-3xl">My Chats</h3>
           <NewButton
-            content={"New Group Chat"}
+            content={
+              <span className="text-sm sm:text-base md:text-lg whitespace-nowrap">
+                New Group Chat
+              </span>
+            }
+            className="px-4 py-2 sm:px-6 sm:py-3 min-w-[140px] md:min-w-[160px] text-center"
             onclick={() => {
               openCreateGroupChatModal();
               setMenuOpen(false);
@@ -83,14 +87,14 @@ const MenuBar = () => {
           />
         </div>
 
-        <ul className="bg-green-100 h-[450px] mt-7 rounded-xl p-4 mx-2 overflow-y-auto">
+        {/* Chat List */}
+        <ul className="bg-green-100 h-[500px] mt-7 rounded-xl p-4 mx-2 overflow-y-auto">
           {loading ? (
             <p className="text-center text-green-700">Loading chats...</p>
           ) : error ? (
             <p className="text-center text-red-600">{error}</p>
           ) : Array.isArray(chats) && chats.length > 0 ? (
-                chats.map((chat) => {
-                  
+            chats.map((chat) => {
               console.log("Chat Users:", chat.users);
               console.log("Chat Object:", chat);
               console.log("Logged User:", loggedUser);
@@ -119,7 +123,6 @@ const MenuBar = () => {
                         : lastMessage}
                     </span>
                   </div>
-                  
                 </li>
               );
             })
